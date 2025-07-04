@@ -1,0 +1,9 @@
+type Person struct {
+    name string
+    age  int
+}
+
+func main() {
+    p := Person{name: "Alice", age: 25}
+    println(p.age)
+}

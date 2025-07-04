@@ -1,0 +1,14 @@
+func main() {
+    x := 2
+    
+    switch x {
+    case 1:
+        println(10)
+    case 2:
+        println(20)
+    case 3:
+        println(30)
+    default:
+        println(99)
+    }
+}

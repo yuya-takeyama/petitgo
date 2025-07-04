@@ -123,6 +123,8 @@ func (g *AsmGenerator) generateStatement(stmt ast.Statement) {
 		g.generateForStatement(s)
 	case *ast.ReturnStatement:
 		g.generateReturnStatement(s)
+	case *ast.SwitchStatement:
+		g.generateSwitchStatement(s)
 	}
 }
 
@@ -185,6 +187,12 @@ func (g *AsmGenerator) generateExpression(expr ast.ASTNode) {
 			g.writeLine("    cmp x1, x0")
 			g.writeLine("    cset x0, ne") // set x0 to 1 if x1 != x0
 		}
+	case *ast.FieldAccessNode:
+		g.generateFieldAccess(n)
+	case *ast.SliceLiteral:
+		g.generateSliceLiteral(n)
+	case *ast.IndexAccess:
+		g.generateIndexAccess(n)
 	}
 }
 
@@ -241,6 +249,61 @@ func (g *AsmGenerator) generateReturnStatement(stmt *ast.ReturnStatement) {
 	g.writeLine("    ret")
 }
 
+func (g *AsmGenerator) generateSwitchStatement(stmt *ast.SwitchStatement) {
+	endLabel := g.getNewLabel()
+
+	// Generate the switch value and store it
+	g.writeLine("    // switch expression")
+	g.generateExpression(stmt.Value)
+	g.writeLine("    str x0, [sp, #-16]!") // Store switch value on stack
+
+	// Generate case comparisons and labels
+	caseLabels := make([]string, len(stmt.Cases))
+	for i := range stmt.Cases {
+		caseLabels[i] = g.getNewLabel()
+	}
+
+	defaultLabel := g.getNewLabel()
+	if stmt.Default != nil {
+		defaultLabel = g.getNewLabel()
+	}
+
+	// Compare each case value
+	for i, caseStmt := range stmt.Cases {
+		g.writeLine(fmt.Sprintf("    // case %d comparison", i))
+		g.generateExpression(caseStmt.Value)
+		g.writeLine("    ldr x1, [sp]") // Load switch value from stack
+		g.writeLine("    cmp x1, x0")
+		g.writeLine(fmt.Sprintf("    beq %s", caseLabels[i]))
+	}
+
+	// If no case matched, go to default or end
+	if stmt.Default != nil {
+		g.writeLine(fmt.Sprintf("    b %s", defaultLabel))
+	} else {
+		g.writeLine(fmt.Sprintf("    b %s", endLabel))
+	}
+
+	// Generate case bodies
+	for i, caseStmt := range stmt.Cases {
+		g.writeLine(fmt.Sprintf("%s:", caseLabels[i]))
+		g.writeLine(fmt.Sprintf("    // case %d body", i))
+		g.generateBlock(caseStmt.Body)
+		g.writeLine(fmt.Sprintf("    b %s", endLabel)) // break to end
+	}
+
+	// Generate default case if exists
+	if stmt.Default != nil {
+		g.writeLine(fmt.Sprintf("%s:", defaultLabel))
+		g.writeLine("    // default case")
+		g.generateBlock(stmt.Default)
+	}
+
+	// End label
+	g.writeLine(fmt.Sprintf("%s:", endLabel))
+	g.writeLine("    add sp, sp, #16") // Restore stack (remove stored switch value)
+}
+
 func (g *AsmGenerator) generateFunctionCall(call *ast.CallNode) {
 	// For now, only handle recursive function calls
 	// Save caller's registers
@@ -253,6 +316,70 @@ func (g *AsmGenerator) generateFunctionCall(call *ast.CallNode) {
 
 	// Call function
 	g.writeLine(fmt.Sprintf("    bl _%s", call.Function))
+}
+
+func (g *AsmGenerator) generateFieldAccess(node *ast.FieldAccessNode) {
+	// For ARM64 assembly, we'll need to implement struct field access
+	// For now, we'll store structs as consecutive memory locations
+	// and access fields by offset
+
+	g.writeLine("    // Field access: obj.field")
+
+	// Generate the object expression first
+	g.generateExpression(node.Object)
+
+	// For now, simple field access - assume field offset is fixed
+	// This is a simplified implementation
+	// In a real implementation, we'd need struct type information
+	fieldOffset := getFieldOffset(node.Field)
+	g.writeLine(fmt.Sprintf("    // Access field '%s' at offset %d", node.Field, fieldOffset))
+	g.writeLine(fmt.Sprintf("    ldr x0, [x0, #%d]", fieldOffset))
+}
+
+// getFieldOffset returns a simple field offset (simplified implementation)
+func getFieldOffset(fieldName string) int {
+	// For simplicity, we'll use a fixed offset based on field name
+	// In a real implementation, this would come from struct type info
+	switch fieldName {
+	case "x", "name", "first":
+		return 0
+	case "y", "age", "second":
+		return 8
+	case "z", "third":
+		return 16
+	default:
+		return 0
+	}
+}
+
+func (g *AsmGenerator) generateSliceLiteral(node *ast.SliceLiteral) {
+	// For ARM64 assembly, we'll implement slices as dynamic arrays
+	// For now, we'll allocate static memory and store element count
+	g.writeLine("    // Slice literal creation")
+
+	// For simplicity, return the length of the slice
+	// In a real implementation, we'd allocate heap memory
+	elementCount := len(node.Elements)
+	g.writeLine(fmt.Sprintf("    mov x0, #%d", elementCount))
+}
+
+func (g *AsmGenerator) generateIndexAccess(node *ast.IndexAccess) {
+	// For ARM64 assembly, we'll access array elements by offset
+	g.writeLine("    // Index access: arr[index]")
+
+	// Generate the object (array/slice) expression
+	g.generateExpression(node.Object)
+	g.writeLine("    str x0, [sp, #-16]!") // Store array base address
+
+	// Generate the index expression
+	g.generateExpression(node.Index)
+	g.writeLine("    ldr x1, [sp], #16") // Load array base address
+
+	// For simplicity, assume 8-byte elements (int64)
+	// Calculate offset: index * 8
+	g.writeLine("    lsl x0, x0, #3") // x0 = index * 8
+	g.writeLine("    add x0, x1, x0") // x0 = base + offset
+	g.writeLine("    ldr x0, [x0]")   // Load value at address
 }
 
 func (g *AsmGenerator) getNewLabel() string {

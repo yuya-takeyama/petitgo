@@ -1,0 +1,11 @@
+func main() {
+    // Test slice len function
+    numbers := []int{1, 2, 3, 4, 5}
+    length := len(numbers)
+    println(length)
+    
+    // Test append function
+    numbers = append(numbers, 6)
+    newLength := len(numbers)
+    println(newLength)
+}
