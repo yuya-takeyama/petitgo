@@ -10,7 +10,6 @@ import (
 
 	"github.com/yuya-takeyama/petitgo/asmgen"
 	"github.com/yuya-takeyama/petitgo/ast"
-	"github.com/yuya-takeyama/petitgo/codegen"
 	"github.com/yuya-takeyama/petitgo/parser"
 	"github.com/yuya-takeyama/petitgo/repl"
 	"github.com/yuya-takeyama/petitgo/scanner"
@@ -49,16 +48,9 @@ func main() {
 			}
 			asmFile(os.Args[2])
 			return
-		case "native":
-			if len(os.Args) < 3 {
-				fmt.Println("Usage: petitgo native <file.pg>")
-				os.Exit(1)
-			}
-			nativeBuild(os.Args[2])
-			return
 		default:
 			fmt.Printf("Unknown command: %s\n", command)
-			fmt.Println("Available commands: build, run, ast, asm, native")
+			fmt.Println("Available commands: build, run, ast, asm")
 			os.Exit(1)
 		}
 	}
@@ -79,33 +71,41 @@ func buildFile(filename string) {
 	// Parse the petitgo code
 	statements := parseProgram(string(content))
 
-	// Generate Go source code
-	gen := codegen.NewGenerator()
-	goSource := gen.GenerateProgram(statements)
+	// Generate ARM64 assembly directly (no more Go codegen)
+	generator := asmgen.NewAsmGenerator()
+	assembly := generator.Generate(statements)
+	runtime := generator.GenerateRuntime()
 
-	// Create temporary Go file
-	tempDir := os.TempDir()
-	tempGoFile := filepath.Join(tempDir, "petitgo_output.go")
-
-	err = os.WriteFile(tempGoFile, []byte(goSource), 0644)
+	// Write assembly to temporary file
+	asmFile := "/tmp/petitgo_temp.s"
+	fullAsm := assembly + runtime
+	err = os.WriteFile(asmFile, []byte(fullAsm), 0644)
 	if err != nil {
-		fmt.Printf("Error writing temporary Go file: %v\n", err)
+		fmt.Printf("Error writing assembly file: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Compile with go build
+	// Get output filename
 	outputName := strings.TrimSuffix(filename, filepath.Ext(filename))
-	cmd := exec.Command("go", "build", "-o", outputName, tempGoFile)
-	output, err := cmd.CombinedOutput()
 
+	// Assemble and link (using system tools, not go build)
+	cmd := exec.Command("as", "-arch", "arm64", "-o", "/tmp/petitgo_temp.o", asmFile)
+	err = cmd.Run()
 	if err != nil {
-		fmt.Printf("Error compiling Go code: %v\n", err)
-		fmt.Printf("Go compiler output:\n%s\n", output)
+		fmt.Printf("Error assembling: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Clean up temporary file
-	os.Remove(tempGoFile)
+	cmd = exec.Command("clang", "-arch", "arm64", "-o", outputName, "/tmp/petitgo_temp.o")
+	err = cmd.Run()
+	if err != nil {
+		fmt.Printf("Error linking: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Clean up
+	os.Remove(asmFile)
+	os.Remove("/tmp/petitgo_temp.o")
 
 	fmt.Printf("Successfully compiled %s to %s\n", filename, outputName)
 }
@@ -120,21 +120,67 @@ func runFile(filename string) {
 	}
 
 	statements := parseProgram(string(content))
-	gen := codegen.NewGenerator()
-	goSource := gen.GenerateProgram(statements)
 
-	// Create temporary Go file
+	// Generate ARM64 assembly directly
+	generator := asmgen.NewAsmGenerator()
+	assembly := generator.Generate(statements)
+	runtime := generator.GenerateRuntime()
+
+	// Create temporary files properly
 	tempDir := os.TempDir()
-	tempGoFile := filepath.Join(tempDir, "petitgo_run.go")
 
-	err = os.WriteFile(tempGoFile, []byte(goSource), 0644)
+	// Create temp assembly file
+	asmFile, err := os.CreateTemp(tempDir, "petitgo_run_*.s")
 	if err != nil {
-		fmt.Printf("Error writing temporary Go file: %v\n", err)
+		fmt.Printf("Error creating temp assembly file: %v\n", err)
+		os.Exit(1)
+	}
+	defer os.Remove(asmFile.Name())
+
+	// Write assembly content
+	fullAsm := assembly + runtime
+	_, err = asmFile.WriteString(fullAsm)
+	asmFile.Close()
+	if err != nil {
+		fmt.Printf("Error writing assembly file: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Run with go run
-	cmd := exec.Command("go", "run", tempGoFile)
+	// Create temp object file
+	objFile, err := os.CreateTemp(tempDir, "petitgo_run_*.o")
+	if err != nil {
+		fmt.Printf("Error creating temp object file: %v\n", err)
+		os.Exit(1)
+	}
+	objFile.Close()
+	defer os.Remove(objFile.Name())
+
+	// Create temp executable file
+	execFile, err := os.CreateTemp(tempDir, "petitgo_run_*")
+	if err != nil {
+		fmt.Printf("Error creating temp executable file: %v\n", err)
+		os.Exit(1)
+	}
+	execFile.Close()
+	defer os.Remove(execFile.Name())
+
+	// Assemble and link
+	cmd := exec.Command("as", "-arch", "arm64", "-o", objFile.Name(), asmFile.Name())
+	err = cmd.Run()
+	if err != nil {
+		fmt.Printf("Error assembling: %v\n", err)
+		os.Exit(1)
+	}
+
+	cmd = exec.Command("clang", "-arch", "arm64", "-o", execFile.Name(), objFile.Name())
+	err = cmd.Run()
+	if err != nil {
+		fmt.Printf("Error linking: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Execute the compiled binary
+	cmd = exec.Command(execFile.Name())
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -143,9 +189,6 @@ func runFile(filename string) {
 		fmt.Printf("Error running program: %v\n", err)
 		os.Exit(1)
 	}
-
-	// Clean up
-	os.Remove(tempGoFile)
 }
 
 // parseProgram parses a petitgo program and returns statements
@@ -213,51 +256,4 @@ func asmFile(filename string) {
 
 	fmt.Print(assembly)
 	fmt.Print(runtime)
-}
-
-// nativeBuild compiles petitgo source to native ARM64 binary
-func nativeBuild(filename string) {
-	// Read the petitgo source file
-	content, err := os.ReadFile(filename)
-	if err != nil {
-		fmt.Printf("Error reading file %s: %v\n", filename, err)
-		os.Exit(1)
-	}
-
-	// Parse the petitgo code
-	statements := parseProgram(string(content))
-
-	// Generate ARM64 assembly
-	generator := asmgen.NewAsmGenerator()
-	assembly := generator.Generate(statements)
-	runtime := generator.GenerateRuntime()
-
-	// Write assembly to temporary file
-	asmFile := "/tmp/petitgo_temp.s"
-	fullAsm := assembly + runtime
-	err = os.WriteFile(asmFile, []byte(fullAsm), 0644)
-	if err != nil {
-		fmt.Printf("Error writing assembly file: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Get output filename
-	outputFile := strings.TrimSuffix(filename, filepath.Ext(filename))
-
-	// Assemble and link
-	cmd := exec.Command("as", "-arch", "arm64", "-o", "/tmp/petitgo_temp.o", asmFile)
-	err = cmd.Run()
-	if err != nil {
-		fmt.Printf("Error assembling: %v\n", err)
-		os.Exit(1)
-	}
-
-	cmd = exec.Command("clang", "-arch", "arm64", "-o", outputFile, "/tmp/petitgo_temp.o")
-	err = cmd.Run()
-	if err != nil {
-		fmt.Printf("Error linking: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Printf("Successfully compiled %s to native binary %s\n", filename, outputFile)
 }

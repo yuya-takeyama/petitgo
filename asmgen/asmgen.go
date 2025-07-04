@@ -164,6 +164,8 @@ func (g *AsmGenerator) generateExpression(expr ast.ASTNode) {
 			g.writeLine("    sub x0, x1, x0")
 		case token.MUL:
 			g.writeLine("    mul x0, x1, x0")
+		case token.QUO:
+			g.writeLine("    udiv x0, x1, x0")
 		case token.LSS:
 			g.writeLine("    cmp x1, x0")
 			g.writeLine("    cset x0, lo") // set x0 to 1 if x1 < x0
@@ -266,46 +268,42 @@ func (g *AsmGenerator) writeLine(s string) {
 func (g *AsmGenerator) GenerateRuntime() string {
 	runtime := `
 _print_number:
-    // Print number in x0 as decimal (ARM64 macOS)
+    // Print number in x0 as decimal (ARM64 macOS) - Simple recursive approach
     stp x29, x30, [sp, #-16]!
     mov x29, sp
-    sub sp, sp, #32         // Space for digit buffer
     
     // Handle zero case
     cmp x0, #0
-    bne print_positive
+    bne print_nonzero
     mov x0, #48             // ASCII '0'
     bl _print_char
     b print_done
     
-print_positive:
-    mov x1, x29             // x1 = buffer pointer (growing downward)
-    mov x2, #10             // x2 = divisor (10)
+print_nonzero:
+    // If number >= 10, print higher digits first (recursion)
+    cmp x0, #10
+    blo print_single_digit
     
-digit_loop:
-    // Divide x0 by 10
-    udiv x3, x0, x2         // x3 = x0 / 10
-    msub x4, x3, x2, x0     // x4 = x0 - (x3 * 10) = remainder
+    // Save current number
+    str x0, [sp, #-16]!
     
-    // Convert remainder to ASCII and store
-    add x4, x4, #48         // Convert to ASCII
-    sub x1, x1, #1          // Move buffer pointer down
-    strb w4, [x1]           // Store character
+    // Divide by 10 and recurse
+    mov x1, #10
+    udiv x0, x0, x1
+    bl _print_number
     
-    mov x0, x3              // x0 = quotient
-    cmp x0, #0              // Continue if quotient > 0
-    bne digit_loop
+    // Restore number and print last digit
+    ldr x0, [sp], #16
+    mov x1, #10
+    udiv x2, x0, x1         // x2 = x0 / 10
+    msub x0, x2, x1, x0     // x0 = x0 - (x2 * 10) = remainder
     
-    // Print digits from buffer
-print_digits:
-    ldrb w0, [x1]           // Load character
-    bl _print_char          // Print it
-    add x1, x1, #1          // Move to next character
-    cmp x1, x29             // Check if at end of buffer
-    bne print_digits
+print_single_digit:
+    // Convert single digit to ASCII and print
+    add x0, x0, #48         // Convert to ASCII
+    bl _print_char
     
 print_done:
-    add sp, sp, #32         // Restore stack
     ldp x29, x30, [sp], #16
     ret
 
