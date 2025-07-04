@@ -1,4 +1,4 @@
-package lexer
+package token
 
 // Token is the set of lexical tokens of the Go programming language.
 type Token int

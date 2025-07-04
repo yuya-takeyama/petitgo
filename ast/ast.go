@@ -1,13 +1,13 @@
-package parser
+package ast
 
-import "github.com/yuya-takeyama/petitgo/lexer"
+import "github.com/yuya-takeyama/petitgo/token"
 
-// AST ノードのインターフェース
+// ASTNode interface for all AST nodes
 type ASTNode interface {
 	String() string
 }
 
-// 数値ノード
+// NumberNode represents a numeric literal
 type NumberNode struct {
 	Value int
 }
@@ -16,10 +16,10 @@ func (n *NumberNode) String() string {
 	return "NumberNode"
 }
 
-// 二項演算ノード
+// BinaryOpNode represents a binary operation
 type BinaryOpNode struct {
 	Left     ASTNode
-	Operator lexer.Token
+	Operator token.Token
 	Right    ASTNode
 }
 
@@ -27,7 +27,7 @@ func (n *BinaryOpNode) String() string {
 	return "BinaryOpNode"
 }
 
-// 変数参照ノード
+// VariableNode represents a variable reference
 type VariableNode struct {
 	Name string
 }
@@ -36,7 +36,7 @@ func (n *VariableNode) String() string {
 	return "VariableNode"
 }
 
-// 関数呼び出しノード (function(args...))
+// CallNode represents a function call (function(args...))
 type CallNode struct {
 	Function  string
 	Arguments []ASTNode
@@ -46,12 +46,12 @@ func (n *CallNode) String() string {
 	return "CallNode"
 }
 
-// Statement インターフェース
+// Statement interface for all statement nodes
 type Statement interface {
 	String() string
 }
 
-// 変数宣言文ノード (var x int = 42)
+// VarStatement represents a variable declaration (var x int = 42)
 type VarStatement struct {
 	Name     string
 	TypeName string
@@ -62,7 +62,7 @@ func (n *VarStatement) String() string {
 	return "VarStatement"
 }
 
-// 代入文ノード (x := 42 or x = 42)
+// AssignStatement represents an assignment (x := 42 or x = 42)
 type AssignStatement struct {
 	Name  string
 	Value ASTNode
@@ -72,7 +72,7 @@ func (n *AssignStatement) String() string {
 	return "AssignStatement"
 }
 
-// ブロック文ノード ({ ... })
+// BlockStatement represents a block of statements ({ ... })
 type BlockStatement struct {
 	Statements []Statement
 }
@@ -81,7 +81,7 @@ func (n *BlockStatement) String() string {
 	return "BlockStatement"
 }
 
-// If文ノード (if condition { block } else { block })
+// IfStatement represents an if statement (if condition { block } else { block })
 type IfStatement struct {
 	Condition ASTNode
 	ThenBlock *BlockStatement
@@ -92,7 +92,7 @@ func (n *IfStatement) String() string {
 	return "IfStatement"
 }
 
-// For文ノード (for init; condition; update { block })
+// ForStatement represents a for loop (for init; condition; update { block })
 type ForStatement struct {
 	Init      Statement // nil for condition-only for loops
 	Condition ASTNode   // nil for infinite loops
@@ -104,21 +104,21 @@ func (n *ForStatement) String() string {
 	return "ForStatement"
 }
 
-// Break文ノード
+// BreakStatement represents a break statement
 type BreakStatement struct{}
 
 func (n *BreakStatement) String() string {
 	return "BreakStatement"
 }
 
-// Continue文ノード
+// ContinueStatement represents a continue statement
 type ContinueStatement struct{}
 
 func (n *ContinueStatement) String() string {
 	return "ContinueStatement"
 }
 
-// 式文ノード (expression;)
+// ExpressionStatement represents an expression as a statement
 type ExpressionStatement struct {
 	Expression ASTNode
 }

@@ -1,11 +1,15 @@
-package main
+package parser
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/yuya-takeyama/petitgo/lexer"
+)
 
 func TestParseNumber(t *testing.T) {
 	input := "42"
-	lexer := NewLexer(input)
-	parser := NewParser(lexer)
+	l := lexer.NewLexer(input)
+	parser := NewParser(l)
 
 	ast := parser.ParseExpression()
 
@@ -21,8 +25,8 @@ func TestParseNumber(t *testing.T) {
 
 func TestParseBinaryExpression(t *testing.T) {
 	input := "1 + 2"
-	lexer := NewLexer(input)
-	parser := NewParser(lexer)
+	l := lexer.NewLexer(input)
+	parser := NewParser(l)
 
 	ast := parser.ParseExpression()
 
@@ -31,8 +35,8 @@ func TestParseBinaryExpression(t *testing.T) {
 		t.Fatalf("expected BinaryOpNode, got %T", ast)
 	}
 
-	if binaryNode.Operator != ADD {
-		t.Errorf("expected ADD operator, got %v", binaryNode.Operator)
+	if binaryNode.Operator != lexer.ADD {
+		t.Errorf("expected lexer.ADD operator, got %v", binaryNode.Operator)
 	}
 
 	leftNumber, ok := binaryNode.Left.(*NumberNode)
@@ -54,8 +58,8 @@ func TestParseBinaryExpression(t *testing.T) {
 
 func TestParseOperatorPrecedence(t *testing.T) {
 	input := "2 + 3 * 4"
-	lexer := NewLexer(input)
-	parser := NewParser(lexer)
+	l := lexer.NewLexer(input)
+	parser := NewParser(l)
 
 	ast := parser.ParseExpression()
 
@@ -65,8 +69,8 @@ func TestParseOperatorPrecedence(t *testing.T) {
 		t.Fatalf("expected BinaryOpNode, got %T", ast)
 	}
 
-	if binaryNode.Operator != ADD {
-		t.Errorf("expected top-level operator to be ADD, got %v", binaryNode.Operator)
+	if binaryNode.Operator != lexer.ADD {
+		t.Errorf("expected top-level operator to be lexer.ADD, got %v", binaryNode.Operator)
 	}
 
 	// 右側が 3 * 4 の BinaryOpNode になってるはず
@@ -75,15 +79,15 @@ func TestParseOperatorPrecedence(t *testing.T) {
 		t.Fatalf("expected right operand to be BinaryOpNode, got %T", binaryNode.Right)
 	}
 
-	if rightBinary.Operator != MUL {
-		t.Errorf("expected right operator to be MUL, got %v", rightBinary.Operator)
+	if rightBinary.Operator != lexer.MUL {
+		t.Errorf("expected right operator to be lexer.MUL, got %v", rightBinary.Operator)
 	}
 }
 
 func TestParseParentheses(t *testing.T) {
 	input := "(2 + 3) * 4"
-	lexer := NewLexer(input)
-	parser := NewParser(lexer)
+	l := lexer.NewLexer(input)
+	parser := NewParser(l)
 
 	ast := parser.ParseExpression()
 
@@ -93,8 +97,8 @@ func TestParseParentheses(t *testing.T) {
 		t.Fatalf("expected BinaryOpNode, got %T", ast)
 	}
 
-	if binaryNode.Operator != MUL {
-		t.Errorf("expected top-level operator to be MUL, got %v", binaryNode.Operator)
+	if binaryNode.Operator != lexer.MUL {
+		t.Errorf("expected top-level operator to be lexer.MUL, got %v", binaryNode.Operator)
 	}
 
 	// 左側が (2 + 3) の BinaryOpNode になってるはず
@@ -103,27 +107,27 @@ func TestParseParentheses(t *testing.T) {
 		t.Fatalf("expected left operand to be BinaryOpNode, got %T", binaryNode.Left)
 	}
 
-	if leftBinary.Operator != ADD {
-		t.Errorf("expected left operator to be ADD, got %v", leftBinary.Operator)
+	if leftBinary.Operator != lexer.ADD {
+		t.Errorf("expected left operator to be lexer.ADD, got %v", leftBinary.Operator)
 	}
 }
 
 func TestParseComparison(t *testing.T) {
 	tests := []struct {
 		input    string
-		operator Token
+		operator lexer.Token
 	}{
-		{"x > 5", GTR},
-		{"x < 5", LSS},
-		{"x == 5", EQL},
-		{"x != 5", NEQ},
-		{"x >= 5", GEQ},
-		{"x <= 5", LEQ},
+		{"x > 5", lexer.GTR},
+		{"x < 5", lexer.LSS},
+		{"x == 5", lexer.EQL},
+		{"x != 5", lexer.NEQ},
+		{"x >= 5", lexer.GEQ},
+		{"x <= 5", lexer.LEQ},
 	}
 
 	for _, tt := range tests {
-		lexer := NewLexer(tt.input)
-		parser := NewParser(lexer)
+		l := lexer.NewLexer(tt.input)
+		parser := NewParser(l)
 
 		ast := parser.ParseExpression()
 
@@ -140,8 +144,8 @@ func TestParseComparison(t *testing.T) {
 
 func TestParseIfStatement(t *testing.T) {
 	input := "if x > 5 { print(x) }"
-	lexer := NewLexer(input)
-	parser := NewParser(lexer)
+	l := lexer.NewLexer(input)
+	parser := NewParser(l)
 
 	stmt := parser.ParseStatement()
 
@@ -156,8 +160,8 @@ func TestParseIfStatement(t *testing.T) {
 		t.Fatalf("expected condition to be BinaryOpNode, got %T", ifStmt.Condition)
 	}
 
-	if binaryNode.Operator != GTR {
-		t.Errorf("expected condition operator to be GTR, got %v", binaryNode.Operator)
+	if binaryNode.Operator != lexer.GTR {
+		t.Errorf("expected condition operator to be lexer.GTR, got %v", binaryNode.Operator)
 	}
 
 	// then block should exist
@@ -173,8 +177,8 @@ func TestParseIfStatement(t *testing.T) {
 
 func TestParseIfElseStatement(t *testing.T) {
 	input := "if x > 5 { print(x) } else { print(0) }"
-	lexer := NewLexer(input)
-	parser := NewParser(lexer)
+	l := lexer.NewLexer(input)
+	parser := NewParser(l)
 
 	stmt := parser.ParseStatement()
 
@@ -196,8 +200,8 @@ func TestParseIfElseStatement(t *testing.T) {
 
 func TestParseForStatement(t *testing.T) {
 	input := "for x < 5 { print(x) }"
-	lexer := NewLexer(input)
-	parser := NewParser(lexer)
+	l := lexer.NewLexer(input)
+	parser := NewParser(l)
 
 	stmt := parser.ParseStatement()
 
@@ -212,8 +216,8 @@ func TestParseForStatement(t *testing.T) {
 		t.Fatalf("expected condition to be BinaryOpNode, got %T", forStmt.Condition)
 	}
 
-	if binaryNode.Operator != LSS {
-		t.Errorf("expected condition operator to be LSS, got %v", binaryNode.Operator)
+	if binaryNode.Operator != lexer.LSS {
+		t.Errorf("expected condition operator to be lexer.LSS, got %v", binaryNode.Operator)
 	}
 
 	// body should exist
@@ -232,8 +236,8 @@ func TestParseForStatement(t *testing.T) {
 
 func TestParseBreakStatement(t *testing.T) {
 	input := "break"
-	lexer := NewLexer(input)
-	parser := NewParser(lexer)
+	l := lexer.NewLexer(input)
+	parser := NewParser(l)
 
 	stmt := parser.ParseStatement()
 
@@ -245,8 +249,8 @@ func TestParseBreakStatement(t *testing.T) {
 
 func TestParseContinueStatement(t *testing.T) {
 	input := "continue"
-	lexer := NewLexer(input)
-	parser := NewParser(lexer)
+	l := lexer.NewLexer(input)
+	parser := NewParser(l)
 
 	stmt := parser.ParseStatement()
 
@@ -258,8 +262,8 @@ func TestParseContinueStatement(t *testing.T) {
 
 func TestParseBlockStatement(t *testing.T) {
 	input := "{ x := 1 y := 2 }"
-	lexer := NewLexer(input)
-	parser := NewParser(lexer)
+	l := lexer.NewLexer(input)
+	parser := NewParser(l)
 
 	stmt := parser.ParseStatement()
 

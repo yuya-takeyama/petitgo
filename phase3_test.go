@@ -1,6 +1,12 @@
 package main
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/yuya-takeyama/petitgo/eval"
+	"github.com/yuya-takeyama/petitgo/lexer"
+	"github.com/yuya-takeyama/petitgo/parser"
+)
 
 func TestPhase3_SimpleComparison(t *testing.T) {
 	tests := []struct {
@@ -16,10 +22,10 @@ func TestPhase3_SimpleComparison(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		lexer := NewLexer(tt.input)
-		parser := NewParser(lexer)
+		lexer := lexer.NewLexer(tt.input)
+		parser := parser.NewParser(lexer)
 		ast := parser.ParseExpression()
-		result := Eval(ast)
+		result := eval.Eval(ast)
 
 		if result != tt.expected {
 			t.Errorf("input: %s, expected: %d, got: %d", tt.input, tt.expected, result)
@@ -31,12 +37,12 @@ func TestPhase3_IfStatement(t *testing.T) {
 	// 簡単な if 文のテスト
 	input := "if 1 > 0 { x := 42 }"
 
-	lexer := NewLexer(input)
-	parser := NewParser(lexer)
+	lexer := lexer.NewLexer(input)
+	parser := parser.NewParser(lexer)
 	stmt := parser.ParseStatement()
 
-	env := NewEnvironment()
-	EvalStatement(stmt, env)
+	env := eval.NewEnvironment()
+	eval.EvalStatement(stmt, env)
 
 	// x が設定されているかチェック
 	value, exists := env.Get("x")
@@ -52,12 +58,12 @@ func TestPhase3_IfElseStatement(t *testing.T) {
 	// if-else 文のテスト
 	input := "if 0 > 1 { x := 42 } else { x := 24 }"
 
-	lexer := NewLexer(input)
-	parser := NewParser(lexer)
+	lexer := lexer.NewLexer(input)
+	parser := parser.NewParser(lexer)
 	stmt := parser.ParseStatement()
 
-	env := NewEnvironment()
-	EvalStatement(stmt, env)
+	env := eval.NewEnvironment()
+	eval.EvalStatement(stmt, env)
 
 	// x が else ブロックの値になっているかチェック
 	value, exists := env.Get("x")
@@ -71,14 +77,14 @@ func TestPhase3_IfElseStatement(t *testing.T) {
 
 func TestPhase3_SimpleVariableComparison(t *testing.T) {
 	// 変数を使った比較のテスト
-	env := NewEnvironment()
+	env := eval.NewEnvironment()
 	env.Set("x", 10)
 	env.Set("y", 5)
 
-	lexer := NewLexer("x > y")
-	parser := NewParser(lexer)
+	lexer := lexer.NewLexer("x > y")
+	parser := parser.NewParser(lexer)
 	ast := parser.ParseExpression()
-	result := EvalWithEnvironment(ast, env)
+	result := eval.EvalWithEnvironment(ast, env)
 
 	if result != 1 {
 		t.Errorf("expected 1 (true), got %d", result)

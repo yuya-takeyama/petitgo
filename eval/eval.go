@@ -12,7 +12,7 @@ type ControlFlowException struct {
 	Type string // "break" or "continue"
 }
 
-// 数値を文字列に変換して出力する（fmt なしで）
+// printInt converts an integer to string and outputs it (without fmt package)
 func printInt(n int) {
 	if n == 0 {
 		os.Stdout.Write([]byte("0"))
@@ -24,7 +24,7 @@ func printInt(n int) {
 		n = -n
 	}
 
-	// 数字を逆順で取得
+	// get digits in reverse order
 	digits := []byte{}
 	for n > 0 {
 		digit := n % 10
@@ -32,7 +32,7 @@ func printInt(n int) {
 		n /= 10
 	}
 
-	// 逆順で出力
+	// output digits in correct order
 	for i := len(digits) - 1; i >= 0; i-- {
 		os.Stdout.Write([]byte{digits[i]})
 	}
@@ -51,7 +51,7 @@ func EvalWithEnvironment(node parser.ASTNode, env *Environment) int {
 		if value, exists := env.Get(n.Name); exists {
 			return value
 		}
-		return 0 // 未定義変数は 0
+		return 0 // undefined variables return 0
 	case *parser.BinaryOpNode:
 		left := EvalWithEnvironment(n.Left, env)
 		right := EvalWithEnvironment(n.Right, env)
@@ -120,7 +120,7 @@ func EvalStatement(stmt parser.Statement, env *Environment) {
 		EvalWithEnvironment(s.Expression, env)
 	case *parser.IfStatement:
 		condition := EvalWithEnvironment(s.Condition, env)
-		if condition != 0 { // 0 は false、それ以外は true
+		if condition != 0 { // 0 is false, anything else is true
 			EvalBlockStatement(s.ThenBlock, env)
 		} else if s.ElseBlock != nil {
 			EvalBlockStatement(s.ElseBlock, env)

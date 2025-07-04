@@ -1,6 +1,10 @@
 package parser
 
-import "github.com/yuya-takeyama/petitgo/lexer"
+import (
+	"github.com/yuya-takeyama/petitgo/ast"
+	"github.com/yuya-takeyama/petitgo/scanner"
+	"github.com/yuya-takeyama/petitgo/token"
+)
 
 // パーサー構造体
 type Parser struct {

@@ -1,6 +1,12 @@
 package main
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/yuya-takeyama/petitgo/eval"
+	"github.com/yuya-takeyama/petitgo/lexer"
+	"github.com/yuya-takeyama/petitgo/parser"
+)
 
 func TestMultipleStatements(t *testing.T) {
 	statements := []string{
@@ -9,13 +15,13 @@ func TestMultipleStatements(t *testing.T) {
 		"z := x + y",
 	}
 
-	env := NewEnvironment()
+	env := eval.NewEnvironment()
 
 	for _, stmt := range statements {
-		lexer := NewLexer(stmt)
-		parser := NewParser(lexer)
+		lexer := lexer.NewLexer(stmt)
+		parser := parser.NewParser(lexer)
 		statement := parser.ParseStatement()
-		EvalStatement(statement, env)
+		eval.EvalStatement(statement, env)
 	}
 
 	// x = 10
@@ -53,13 +59,13 @@ func TestVariableReassignment(t *testing.T) {
 		"x = x * 2",
 	}
 
-	env := NewEnvironment()
+	env := eval.NewEnvironment()
 
 	for _, stmt := range statements {
-		lexer := NewLexer(stmt)
-		parser := NewParser(lexer)
+		lexer := lexer.NewLexer(stmt)
+		parser := parser.NewParser(lexer)
 		statement := parser.ParseStatement()
-		EvalStatement(statement, env)
+		eval.EvalStatement(statement, env)
 	}
 
 	// x should be 30 ((10 + 5) * 2)
@@ -80,13 +86,13 @@ func TestComplexExpressionWithVariables(t *testing.T) {
 		"result := a + b * c",
 	}
 
-	env := NewEnvironment()
+	env := eval.NewEnvironment()
 
 	for _, stmt := range statements {
-		lexer := NewLexer(stmt)
-		parser := NewParser(lexer)
+		lexer := lexer.NewLexer(stmt)
+		parser := parser.NewParser(lexer)
 		statement := parser.ParseStatement()
-		EvalStatement(statement, env)
+		eval.EvalStatement(statement, env)
 	}
 
 	// result should be 14 (2 + 3 * 4)
