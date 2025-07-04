@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -33,9 +34,16 @@ func main() {
 			}
 			runFile(os.Args[2])
 			return
+		case "ast":
+			if len(os.Args) < 3 {
+				fmt.Println("Usage: petitgo ast <file.go>")
+				os.Exit(1)
+			}
+			astFile(os.Args[2])
+			return
 		default:
 			fmt.Printf("Unknown command: %s\n", command)
-			fmt.Println("Available commands: build, run")
+			fmt.Println("Available commands: build, run, ast")
 			os.Exit(1)
 		}
 	}
@@ -141,4 +149,32 @@ func parseProgram(source string) []ast.Statement {
 	}
 
 	return statements
+}
+
+// astFile parses a petitgo file and outputs the AST as JSON
+func astFile(filename string) {
+	// Read the petitgo source file
+	content, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Printf("Error reading file %s: %v\n", filename, err)
+		os.Exit(1)
+	}
+
+	// Parse the petitgo code
+	statements := parseProgram(string(content))
+
+	// Convert AST to JSON using MarshalJSON methods
+	program := map[string]interface{}{
+		"type":       "Program",
+		"statements": statements,
+	}
+
+	// Pretty print JSON
+	jsonBytes, err := json.MarshalIndent(program, "", "  ")
+	if err != nil {
+		fmt.Printf("Error marshaling AST to JSON: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println(string(jsonBytes))
 }
