@@ -56,3 +56,17 @@ coverage.html
 # Temporary files
 *.tmp
 *.temp
+
+# Compiled petitgo binaries (native compilation output)
+examples/fibonacci
+examples/fib_test
+examples/simple_digit_test
+examples/add_test
+examples/variable_test
+examples/math_test
+examples/real_fib
+examples/simple_fib
+examples/hello_native
+examples/hello_only
+examples/simple_native
+examples/basic_math
