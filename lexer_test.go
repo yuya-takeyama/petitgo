@@ -19,3 +19,27 @@ func TestLexer_NextToken_SingleNumber(t *testing.T) {
 		t.Fatalf("token literal wrong. expected=%s, got=%s", "123", token.Literal)
 	}
 }
+
+func TestLexer_NextToken_DifferentNumbers(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedLiteral string
+	}{
+		{"456", "456"},
+		{"1", "1"},
+		{"99999", "99999"},
+	}
+	
+	for _, tt := range tests {
+		lexer := NewLexer(tt.input)
+		token := lexer.NextToken()
+		
+		if token.Type != NUMBER {
+			t.Fatalf("token type wrong. expected=%s, got=%s", NUMBER, token.Type)
+		}
+		
+		if token.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, token.Literal)
+		}
+	}
+}
