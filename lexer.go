@@ -8,6 +8,8 @@ const (
 	MINUS  TokenType = "MINUS"
 	STAR   TokenType = "STAR"
 	SLASH  TokenType = "SLASH"
+	LPAREN TokenType = "LPAREN"
+	RPAREN TokenType = "RPAREN"
 	EOF    TokenType = "EOF"
 )
 
@@ -33,7 +35,7 @@ func (l *Lexer) NextToken() Token {
 	
 	ch := l.input[l.position]
 	
-	// 演算子の判定
+	// 演算子と括弧の判定
 	switch ch {
 	case '+':
 		l.position++
@@ -47,6 +49,12 @@ func (l *Lexer) NextToken() Token {
 	case '/':
 		l.position++
 		return Token{Type: SLASH, Literal: "/"}
+	case '(':
+		l.position++
+		return Token{Type: LPAREN, Literal: "("}
+	case ')':
+		l.position++
+		return Token{Type: RPAREN, Literal: ")"}
 	}
 	
 	// 数字を読み取る
