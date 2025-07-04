@@ -1,0 +1,26 @@
+// Test switch statement
+func main() {
+    x := 2
+    
+    switch x {
+    case 1:
+        println("One")
+    case 2:
+        println("Two")
+    case 3:
+        println("Three")
+    default:
+        println("Other")
+    }
+    
+    // String switch
+    name := "Alice"
+    switch name {
+    case "Alice":
+        println("Hello Alice")
+    case "Bob":
+        println("Hello Bob")
+    default:
+        println("Hello stranger")
+    }
+}

@@ -157,6 +157,114 @@ func (n *AssignStatement) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// ReassignStatement represents a variable reassignment (x = 42)
+type ReassignStatement struct {
+	Name  string
+	Value ASTNode
+}
+
+func (n *ReassignStatement) String() string {
+	return "ReassignStatement"
+}
+
+func (n *ReassignStatement) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"type":  "ReassignStatement",
+		"name":  n.Name,
+		"value": n.Value,
+	})
+}
+
+// CompoundAssignStatement represents compound assignment (x += y, x -= y, etc.)
+type CompoundAssignStatement struct {
+	Name     string
+	Operator token.Token // ADD_ASSIGN, SUB_ASSIGN, etc.
+	Value    ASTNode
+}
+
+func (n *CompoundAssignStatement) String() string {
+	return "CompoundAssignStatement"
+}
+
+func (n *CompoundAssignStatement) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"type":     "CompoundAssignStatement",
+		"name":     n.Name,
+		"operator": tokenToString(n.Operator),
+		"value":    n.Value,
+	})
+}
+
+// IncStatement represents an increment statement (x++)
+type IncStatement struct {
+	Name string
+}
+
+func (n *IncStatement) String() string {
+	return "IncStatement"
+}
+
+func (n *IncStatement) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"type": "IncStatement",
+		"name": n.Name,
+	})
+}
+
+// DecStatement represents a decrement statement (x--)
+type DecStatement struct {
+	Name string
+}
+
+func (n *DecStatement) String() string {
+	return "DecStatement"
+}
+
+func (n *DecStatement) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"type": "DecStatement",
+		"name": n.Name,
+	})
+}
+
+// SwitchStatement represents a switch statement
+type SwitchStatement struct {
+	Value   ASTNode
+	Cases   []*CaseStatement
+	Default *BlockStatement
+}
+
+func (n *SwitchStatement) String() string {
+	return "SwitchStatement"
+}
+
+func (n *SwitchStatement) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"type":    "SwitchStatement",
+		"value":   n.Value,
+		"cases":   n.Cases,
+		"default": n.Default,
+	})
+}
+
+// CaseStatement represents a case in a switch
+type CaseStatement struct {
+	Value ASTNode
+	Body  *BlockStatement
+}
+
+func (n *CaseStatement) String() string {
+	return "CaseStatement"
+}
+
+func (n *CaseStatement) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"type":  "CaseStatement",
+		"value": n.Value,
+		"body":  n.Body,
+	})
+}
+
 // BlockStatement represents a block of statements ({ ... })
 type BlockStatement struct {
 	Statements []Statement
@@ -490,6 +598,14 @@ func tokenToString(tok token.Token) string {
 		return "||"
 	case token.NOT:
 		return "!"
+	case token.ADD_ASSIGN:
+		return "+="
+	case token.SUB_ASSIGN:
+		return "-="
+	case token.MUL_ASSIGN:
+		return "*="
+	case token.QUO_ASSIGN:
+		return "/="
 	default:
 		return fmt.Sprintf("TOKEN_%d", int(tok))
 	}

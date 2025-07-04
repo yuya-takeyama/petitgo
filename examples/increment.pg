@@ -1,0 +1,21 @@
+// Test increment and decrement operators
+func main() {
+    x := 10
+    println(x) // 10
+    
+    x++
+    println(x) // 11
+    
+    x++
+    println(x) // 12
+    
+    x--
+    println(x) // 11
+    
+    // More complex example
+    y := 5
+    y++
+    y++
+    y--
+    println(y) // 6
+}

@@ -19,7 +19,13 @@ func NewParser(s *scanner.Scanner) *Parser {
 }
 
 func (p *Parser) nextToken() {
-	p.currentToken = p.scanner.NextToken()
+	for {
+		p.currentToken = p.scanner.NextToken()
+		// Skip comments
+		if p.currentToken.Type != token.COMMENT {
+			break
+		}
+	}
 }
 
 func (p *Parser) ParseStatement() ast.Statement {
@@ -33,17 +39,31 @@ func (p *Parser) ParseStatement() ast.Statement {
 		if p.currentToken.Literal == "var" {
 			return p.parseVarStatement()
 		}
-		// 次のトークンが ASSIGN なら代入文、そうでなければ式文
+		// Check what follows the identifier
 		nextScanner := scanner.NewScanner(p.scanner.Input()[p.scanner.Position():])
 		nextToken := nextScanner.NextToken()
+
 		if nextToken.Type == token.ASSIGN {
-			return p.parseAssignStatement()
+			if nextToken.Literal == ":=" {
+				return p.parseAssignStatement()
+			} else {
+				return p.parseReassignStatement()
+			}
+		} else if nextToken.Type == token.INC {
+			return p.parseIncStatement()
+		} else if nextToken.Type == token.DEC {
+			return p.parseDecStatement()
+		} else if nextToken.Type == token.ADD_ASSIGN || nextToken.Type == token.SUB_ASSIGN ||
+			nextToken.Type == token.MUL_ASSIGN || nextToken.Type == token.QUO_ASSIGN {
+			return p.parseCompoundAssignStatement()
 		}
 		return p.parseExpressionStatement()
 	case token.IF:
 		return p.parseIfStatement()
 	case token.FOR:
 		return p.parseForStatement()
+	case token.SWITCH:
+		return p.parseSwitchStatement()
 	case token.BREAK:
 		return p.parseBreakStatement()
 	case token.CONTINUE:
@@ -105,6 +125,146 @@ func (p *Parser) parseAssignStatement() ast.Statement {
 	return &ast.AssignStatement{
 		Name:  name,
 		Value: value,
+	}
+}
+
+func (p *Parser) parseReassignStatement() ast.Statement {
+	// 変数名
+	name := p.currentToken.Literal
+	p.nextToken()
+
+	// =
+	p.nextToken()
+
+	// 式
+	value := p.ParseExpression()
+
+	return &ast.ReassignStatement{
+		Name:  name,
+		Value: value,
+	}
+}
+
+func (p *Parser) parseIncStatement() ast.Statement {
+	// 変数名
+	name := p.currentToken.Literal
+	p.nextToken()
+
+	// ++
+	p.nextToken()
+
+	return &ast.IncStatement{
+		Name: name,
+	}
+}
+
+func (p *Parser) parseDecStatement() ast.Statement {
+	// 変数名
+	name := p.currentToken.Literal
+	p.nextToken()
+
+	// --
+	p.nextToken()
+
+	return &ast.DecStatement{
+		Name: name,
+	}
+}
+
+func (p *Parser) parseCompoundAssignStatement() ast.Statement {
+	// 変数名
+	name := p.currentToken.Literal
+	p.nextToken()
+
+	// compound operator (+=, -=, etc.)
+	operator := p.currentToken.Type
+	p.nextToken()
+
+	// 式
+	value := p.ParseExpression()
+
+	return &ast.CompoundAssignStatement{
+		Name:     name,
+		Operator: operator,
+		Value:    value,
+	}
+}
+
+func (p *Parser) parseSwitchStatement() ast.Statement {
+	// switch
+	p.nextToken()
+
+	// value to switch on
+	value := p.ParseExpression()
+
+	// {
+	if p.currentToken.Type != token.LBRACE {
+		return &ast.SwitchStatement{}
+	}
+	p.nextToken()
+
+	var cases []*ast.CaseStatement
+	var defaultCase *ast.BlockStatement
+
+	// Parse cases
+	for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
+		if p.currentToken.Type == token.CASE {
+			// case value:
+			p.nextToken()
+			caseValue := p.ParseExpression()
+
+			// :
+			if p.currentToken.Literal == ":" {
+				p.nextToken()
+			}
+
+			// Parse statements until next case/default/}
+			var statements []ast.Statement
+			for p.currentToken.Type != token.CASE &&
+				p.currentToken.Type != token.DEFAULT &&
+				p.currentToken.Type != token.RBRACE &&
+				p.currentToken.Type != token.EOF {
+				if stmt := p.ParseStatement(); stmt != nil {
+					statements = append(statements, stmt)
+				}
+			}
+
+			cases = append(cases, &ast.CaseStatement{
+				Value: caseValue,
+				Body:  &ast.BlockStatement{Statements: statements},
+			})
+		} else if p.currentToken.Type == token.DEFAULT {
+			// default:
+			p.nextToken()
+
+			// :
+			if p.currentToken.Literal == ":" {
+				p.nextToken()
+			}
+
+			// Parse statements until }
+			var statements []ast.Statement
+			for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
+				if stmt := p.ParseStatement(); stmt != nil {
+					statements = append(statements, stmt)
+				}
+			}
+
+			defaultCase = &ast.BlockStatement{Statements: statements}
+		} else {
+			p.nextToken()
+		}
+	}
+
+	// }
+	if p.currentToken.Type == token.RBRACE {
+		p.nextToken()
+	}
+
+	return &ast.SwitchStatement{
+		Value:   value,
+		Cases:   cases,
+		Default: defaultCase,
 	}
 }
 
@@ -189,22 +349,91 @@ func (p *Parser) parseForStatement() ast.Statement {
 	// 1. for condition { ... } (condition-only)
 	// 2. for init; condition; update { ... } (full form)
 
-	// とりあえず condition-only form で実装
+	// Check if this is full form (has semicolons)
+	// We need to look ahead to see if there are semicolons
+	if p.hasForLoopSemicolons() {
+		return p.parseFullForStatement()
+	} else {
+		return p.parseConditionOnlyForStatement()
+	}
+}
+
+func (p *Parser) hasForLoopSemicolons() bool {
+	// Simple check: scan ahead for semicolons before opening brace
+	scanner := p.scanner
+	pos := scanner.Position()
+	input := scanner.Input()
+
+	for pos < len(input) && input[pos] != '{' && input[pos] != '\n' {
+		if input[pos] == ';' {
+			return true
+		}
+		pos++
+	}
+	return false
+}
+
+func (p *Parser) parseConditionOnlyForStatement() ast.Statement {
+	// for condition { ... }
 	condition := p.ParseExpression()
 
 	// {
 	if p.currentToken.Type != token.LBRACE {
-		// エラー: とりあえずダミーを返す
 		return &ast.ForStatement{}
 	}
 
-	// body
 	body := p.parseBlockStatement()
 
 	return &ast.ForStatement{
 		Init:      nil,
 		Condition: condition,
 		Update:    nil,
+		Body:      body,
+	}
+}
+
+func (p *Parser) parseFullForStatement() ast.Statement {
+	// for init; condition; update { ... }
+
+	// init statement
+	var init ast.Statement
+	if p.currentToken.Type != token.SEMICOLON {
+		init = p.ParseStatement()
+	}
+
+	// skip semicolon
+	if p.currentToken.Type == token.SEMICOLON {
+		p.nextToken()
+	}
+
+	// condition
+	var condition ast.ASTNode
+	if p.currentToken.Type != token.SEMICOLON {
+		condition = p.ParseExpression()
+	}
+
+	// skip semicolon
+	if p.currentToken.Type == token.SEMICOLON {
+		p.nextToken()
+	}
+
+	// update statement
+	var update ast.Statement
+	if p.currentToken.Type != token.LBRACE {
+		update = p.ParseStatement()
+	}
+
+	// {
+	if p.currentToken.Type != token.LBRACE {
+		return &ast.ForStatement{}
+	}
+
+	body := p.parseBlockStatement()
+
+	return &ast.ForStatement{
+		Init:      init,
+		Condition: condition,
+		Update:    update,
 		Body:      body,
 	}
 }

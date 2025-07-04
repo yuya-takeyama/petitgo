@@ -396,6 +396,74 @@ func EvalStatement(stmt ast.Statement, env *Environment) {
 		// If variable doesn't exist, infer type from value (type inference)
 
 		env.Set(s.Name, value)
+	case *ast.ReassignStatement:
+		// Variable reassignment - must exist already
+		value := EvalValueWithEnvironment(s.Value, env)
+
+		// Check if variable exists
+		if existingValue, exists := env.Get(s.Name); exists {
+			// Variable exists - check type compatibility
+			existingType := existingValue.Type()
+			newType := value.Type()
+
+			if existingType != newType {
+				// Type mismatch - use zero value of existing type for type safety
+				switch existingType {
+				case "int":
+					value = &IntValue{Value: 0}
+				case "string":
+					value = &StringValue{Value: ""}
+				case "bool":
+					value = &BoolValue{Value: false}
+				default:
+					// Unknown type, keep new value (fallback)
+				}
+			}
+
+			env.Set(s.Name, value)
+		} else {
+			// Variable doesn't exist - this would be a compile error in real Go
+			// For now, we'll just ignore it
+		}
+	case *ast.IncStatement:
+		// Increment statement - variable must exist
+		if existingValue, exists := env.Get(s.Name); exists {
+			if intVal, ok := existingValue.(*IntValue); ok {
+				env.Set(s.Name, &IntValue{Value: intVal.Value + 1})
+			}
+		}
+	case *ast.DecStatement:
+		// Decrement statement - variable must exist
+		if existingValue, exists := env.Get(s.Name); exists {
+			if intVal, ok := existingValue.(*IntValue); ok {
+				env.Set(s.Name, &IntValue{Value: intVal.Value - 1})
+			}
+		}
+	case *ast.CompoundAssignStatement:
+		// Compound assignment - variable must exist
+		if existingValue, exists := env.Get(s.Name); exists {
+			if intVal, ok := existingValue.(*IntValue); ok {
+				newValue := EvalValueWithEnvironment(s.Value, env)
+				if newIntVal, ok := newValue.(*IntValue); ok {
+					var result int
+					switch s.Operator {
+					case token.ADD_ASSIGN:
+						result = intVal.Value + newIntVal.Value
+					case token.SUB_ASSIGN:
+						result = intVal.Value - newIntVal.Value
+					case token.MUL_ASSIGN:
+						result = intVal.Value * newIntVal.Value
+					case token.QUO_ASSIGN:
+						if newIntVal.Value != 0 {
+							result = intVal.Value / newIntVal.Value
+						} else {
+							result = 0 // Handle division by zero
+						}
+					}
+					env.Set(s.Name, &IntValue{Value: result})
+				}
+			}
+		}
 	case *ast.ExpressionStatement:
 		// Use type-aware evaluation for expressions
 		EvalValueWithEnvironment(s.Expression, env)
@@ -408,6 +476,11 @@ func EvalStatement(stmt ast.Statement, env *Environment) {
 			EvalBlockStatement(s.ElseBlock, env)
 		}
 	case *ast.ForStatement:
+		// Execute init statement if present
+		if s.Init != nil {
+			EvalStatement(s.Init, env)
+		}
+
 		for {
 			// condition check with type-aware evaluation
 			if s.Condition != nil {
@@ -420,7 +493,10 @@ func EvalStatement(stmt ast.Statement, env *Environment) {
 			// body execution
 			EvalBlockStatement(s.Body, env)
 
-			// update (not implemented for condition-only form)
+			// execute update statement if present
+			if s.Update != nil {
+				EvalStatement(s.Update, env)
+			}
 		}
 	case *ast.BlockStatement:
 		EvalBlockStatement(s, env)

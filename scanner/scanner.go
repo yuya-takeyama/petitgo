@@ -17,6 +17,9 @@ var keywords = map[string]token.Token{
 	"type":     token.TYPE,
 	"package":  token.PACKAGE,
 	"import":   token.IMPORT,
+	"switch":   token.SWITCH,
+	"case":     token.CASE,
+	"default":  token.DEFAULT,
 	"var":      token.IDENT, // var is handled as token.IDENT for now
 }
 
@@ -51,15 +54,49 @@ func (s *Scanner) NextToken() token.TokenInfo {
 	// Handle operators and delimiters
 	switch ch {
 	case '+':
+		if s.position+1 < len(s.input) && s.input[s.position+1] == '+' {
+			s.position += 2
+			return token.TokenInfo{Type: token.INC, Literal: "++"}
+		}
+		if s.position+1 < len(s.input) && s.input[s.position+1] == '=' {
+			s.position += 2
+			return token.TokenInfo{Type: token.ADD_ASSIGN, Literal: "+="}
+		}
 		s.position++
 		return token.TokenInfo{Type: token.ADD, Literal: "+"}
 	case '-':
+		if s.position+1 < len(s.input) && s.input[s.position+1] == '-' {
+			s.position += 2
+			return token.TokenInfo{Type: token.DEC, Literal: "--"}
+		}
+		if s.position+1 < len(s.input) && s.input[s.position+1] == '=' {
+			s.position += 2
+			return token.TokenInfo{Type: token.SUB_ASSIGN, Literal: "-="}
+		}
 		s.position++
 		return token.TokenInfo{Type: token.SUB, Literal: "-"}
 	case '*':
+		if s.position+1 < len(s.input) && s.input[s.position+1] == '=' {
+			s.position += 2
+			return token.TokenInfo{Type: token.MUL_ASSIGN, Literal: "*="}
+		}
 		s.position++
 		return token.TokenInfo{Type: token.MUL, Literal: "*"}
 	case '/':
+		// Check for comments first
+		if s.position+1 < len(s.input) && s.input[s.position+1] == '/' {
+			// Line comment //
+			return s.scanLineComment()
+		}
+		if s.position+1 < len(s.input) && s.input[s.position+1] == '*' {
+			// Block comment /* */
+			return s.scanBlockComment()
+		}
+		// Check for /= operator
+		if s.position+1 < len(s.input) && s.input[s.position+1] == '=' {
+			s.position += 2
+			return token.TokenInfo{Type: token.QUO_ASSIGN, Literal: "/="}
+		}
 		s.position++
 		return token.TokenInfo{Type: token.QUO, Literal: "/"}
 	case ':':
@@ -125,6 +162,9 @@ func (s *Scanner) NextToken() token.TokenInfo {
 	case '.':
 		s.position++
 		return token.TokenInfo{Type: token.PERIOD, Literal: "."}
+	case ';':
+		s.position++
+		return token.TokenInfo{Type: token.SEMICOLON, Literal: ";"}
 	case '[':
 		s.position++
 		return token.TokenInfo{Type: token.LBRACK, Literal: "["}
@@ -251,4 +291,40 @@ func processEscapeSequences(input string) string {
 		}
 	}
 	return result
+}
+
+// scanLineComment scans a line comment starting with //
+func (s *Scanner) scanLineComment() token.TokenInfo {
+	start := s.position
+	s.position += 2 // skip //
+
+	// Read until end of line or end of input
+	for s.position < len(s.input) && s.input[s.position] != '\n' {
+		s.position++
+	}
+
+	return token.TokenInfo{
+		Type:    token.COMMENT,
+		Literal: string(s.input[start:s.position]),
+	}
+}
+
+// scanBlockComment scans a block comment starting with /* and ending with */
+func (s *Scanner) scanBlockComment() token.TokenInfo {
+	start := s.position
+	s.position += 2 // skip /*
+
+	// Read until */ or end of input
+	for s.position+1 < len(s.input) {
+		if s.input[s.position] == '*' && s.input[s.position+1] == '/' {
+			s.position += 2 // skip */
+			break
+		}
+		s.position++
+	}
+
+	return token.TokenInfo{
+		Type:    token.COMMENT,
+		Literal: string(s.input[start:s.position]),
+	}
 }

@@ -118,6 +118,31 @@ func (g *Generator) generateStatement(stmt ast.Statement) {
 		g.writeIndent()
 		g.write(s.Name + " := ")
 		g.generateNode(s.Value)
+	case *ast.ReassignStatement:
+		g.writeIndent()
+		g.write(s.Name + " = ")
+		g.generateNode(s.Value)
+	case *ast.IncStatement:
+		g.writeIndent()
+		g.write(s.Name + "++")
+	case *ast.DecStatement:
+		g.writeIndent()
+		g.write(s.Name + "--")
+	case *ast.CompoundAssignStatement:
+		g.writeIndent()
+		operatorStr := ""
+		switch s.Operator {
+		case token.ADD_ASSIGN:
+			operatorStr = "+="
+		case token.SUB_ASSIGN:
+			operatorStr = "-="
+		case token.MUL_ASSIGN:
+			operatorStr = "*="
+		case token.QUO_ASSIGN:
+			operatorStr = "/="
+		}
+		g.write(s.Name + " " + operatorStr + " ")
+		g.generateNode(s.Value)
 	case *ast.ExpressionStatement:
 		g.writeIndent()
 		g.generateNode(s.Expression)
@@ -153,6 +178,34 @@ func (g *Generator) generateStatement(stmt ast.Statement) {
 			g.write(" else ")
 			g.generateBlockStatement(s.ElseBlock)
 		}
+	case *ast.ForStatement:
+		g.writeIndent()
+		g.write("for ")
+
+		// Generate init, condition, update if present
+		if s.Init != nil || s.Condition != nil || s.Update != nil {
+			if s.Init != nil {
+				g.generateStatement(s.Init)
+				g.write("; ")
+			} else {
+				g.write("; ")
+			}
+
+			if s.Condition != nil {
+				g.generateNode(s.Condition)
+			}
+			g.write("; ")
+
+			if s.Update != nil {
+				g.generateStatement(s.Update)
+			}
+		} else if s.Condition != nil {
+			// condition-only form
+			g.generateNode(s.Condition)
+		}
+
+		g.write(" ")
+		g.generateBlockStatement(s.Body)
 	case *ast.BlockStatement:
 		g.generateBlockStatement(s)
 	default:

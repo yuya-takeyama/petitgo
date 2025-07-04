@@ -1,0 +1,21 @@
+// Test complete for loop functionality
+func main() {
+    // Traditional for loop with init; condition; update
+    for i := 0; i < 5; i++ {
+        println(i)
+    }
+    
+    // Another example
+    sum := 0
+    for j := 1; j <= 3; j++ {
+        sum = sum + j
+        println(sum)
+    }
+    
+    // Condition-only for loop
+    x := 10
+    for x > 5 {
+        println(x)
+        x--
+    }
+}

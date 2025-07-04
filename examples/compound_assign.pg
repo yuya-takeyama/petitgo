@@ -1,0 +1,24 @@
+// Test compound assignment operators
+func main() {
+    x := 10
+    println(x) // 10
+    
+    x += 5
+    println(x) // 15
+    
+    x -= 3
+    println(x) // 12
+    
+    x *= 2
+    println(x) // 24
+    
+    x /= 4
+    println(x) // 6
+    
+    // More complex example
+    y := 100
+    for i := 0; i < 3; i++ {
+        y += i * 10
+        println(y)
+    }
+}

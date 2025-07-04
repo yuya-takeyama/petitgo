@@ -1,0 +1,24 @@
+// Self-hosting test - a simple petitgo program
+func main() {
+    // Variable declarations and reassignments  
+    x := 10
+    y := 20
+    x = x + y
+    
+    // Loop with increment
+    for i := 0; i < 3; i++ {
+        println(i)
+    }
+    
+    // Conditional with complex expressions
+    if x > 25 {
+        z := x * 2
+        z++
+        println(z)
+    }
+    
+    // String operations
+    message := "Hello"
+    message = "World"
+    println(message)
+}

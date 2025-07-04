@@ -27,7 +27,13 @@ const (
 	QUO // /
 	REM // %
 
-	ASSIGN // := or =
+	ASSIGN     // := or =
+	INC        // ++
+	DEC        // --
+	ADD_ASSIGN // +=
+	SUB_ASSIGN // -=
+	MUL_ASSIGN // *=
+	QUO_ASSIGN // /=
 
 	// Comparison operators
 	EQL // ==
@@ -42,15 +48,16 @@ const (
 	LOR  // ||
 	NOT  // !
 
-	LPAREN // (
-	RPAREN // )
-	LBRACE // {
-	RBRACE // }
-	COMMA  // ,
-	PERIOD // .
-	COLON  // :
-	LBRACK // [
-	RBRACK // ]
+	LPAREN    // (
+	RPAREN    // )
+	LBRACE    // {
+	RBRACE    // }
+	COMMA     // ,
+	PERIOD    // .
+	COLON     // :
+	SEMICOLON // ;
+	LBRACK    // [
+	RBRACK    // ]
 	operator_end
 
 	keyword_beg
@@ -68,6 +75,9 @@ const (
 	TYPE     // type
 	PACKAGE  // package
 	IMPORT   // import
+	SWITCH   // switch
+	CASE     // case
+	DEFAULT  // default
 	keyword_end
 )
 

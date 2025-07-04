@@ -1,0 +1,14 @@
+// This is a line comment
+func main() {
+    x := 10 // Another comment
+    /* This is a 
+       block comment */
+    y := 20
+    println(x) // Print x
+    println(y)
+    /* Multi-line block comment:
+       This demonstrates that block comments
+       can span multiple lines */
+    z := x + y
+    println(z) // Final result
+}

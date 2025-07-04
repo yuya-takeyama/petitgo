@@ -1,0 +1,11 @@
+func main() {
+    x := 10
+    println(x)
+    x = 20
+    println(x)
+    
+    y := "hello"
+    println(y)
+    y = "world"
+    println(y)
+}

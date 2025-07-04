@@ -346,13 +346,73 @@ petitgo/
 
 ## 開発メモリ
 
-### 2025-07-04 作業内容
+### 2025-07-04 作業内容 (Phase 8 バグ修正)
 - Phase 3 統合テストがValue型システムで失敗していた問題を修正
 - `parseIfCondition` が数値から始まる比較式（`1 > 0`）を正しく解析できていなかった
 - `parseTerm()` から `ParseExpression()` に変更して解決
 - 全テストが通ることを確認済み
 
+### 2025-07-04 作業内容 (Phase 8 演算子優先順位修正)
+- calculator.pg の `result2 := (x + y) * 2` が正しく動作しない問題を発見
+- TDD アプローチで tests/integration/calculator_test.go を作成
+- codegen で全ての BinaryOpNode を括弧で囲むように修正
+- 括弧による演算子優先順位制御が完全に動作するように
+
+### 2025-07-04 作業内容 (AST JSON 出力機能追加)
+- `petitgo ast file.pg` コマンドを新規実装
+- 全ての AST ノードと Statement に MarshalJSON() メソッドを追加
+- JSON による AST 構造の可視化が可能に
+- 包括的なテストスイート (ast_test.go) も実装
+
+### 2025-07-04 作業内容 (Phase 9 開始 - セルフホスティング基盤)
+- **変数再代入 (x = y) の完全実装**
+  - ReassignStatement AST ノードを新規追加
+  - parser, codegen, eval の全てに対応追加
+  - examples/reassignment.pg で動作確認完了
+- **コメント機能の完全実装**
+  - 行コメント (//) とブロックコメント (/* */) の両方をサポート
+  - scanner に scanLineComment, scanBlockComment メソッド追加
+  - parser でコメントを自動スキップ
+  - examples/comments.pg で動作確認完了
+- **インクリメント・デクリメント演算子 (++, --)**
+  - INC, DEC トークンと IncStatement, DecStatement AST ノード追加
+  - 全コンポーネント (scanner, parser, codegen, eval) に実装
+  - examples/increment.pg で動作確認完了
+- **完全な for ループ (init; condition; update)**
+  - セミコロン (SEMICOLON) トークンを新規追加
+  - for ループの完全形式 `for i := 0; i < 10; i++` をサポート
+  - parser で condition-only と full-form を自動判別
+  - examples/for_loop.pg で動作確認完了
+- **複合代入演算子 (+=, -=, *=, /=)**
+  - ADD_ASSIGN, SUB_ASSIGN, MUL_ASSIGN, QUO_ASSIGN トークン追加
+  - CompoundAssignStatement AST ノード実装
+  - 全コンポーネントに実装完了
+  - examples/compound_assign.pg で動作確認完了
+- **switch 文の実装開始**
+  - SWITCH, CASE, DEFAULT トークンと SwitchStatement, CaseStatement AST ノード追加
+  - parser での switch 文パース実装完了
+  - codegen と eval は次回実装予定
+
+**Phase 9 達成状況:**
+- ✅ 変数再代入 (x = y)
+- ✅ コメント (// と /* */)
+- ✅ インクリメント・デクリメント (++, --)
+- ✅ 完全な for ループ (init; condition; update)
+- ✅ 複合代入演算子 (+=, -=, *=, /=)
+- 🚧 switch 文 (parser まで実装済み)
+
+**新しいサンプルファイル:**
+- examples/reassignment.pg - 変数再代入のデモ
+- examples/comments.pg - コメント機能のデモ
+- examples/increment.pg - インクリメント・デクリメントのデモ
+- examples/for_loop.pg - 完全な for ループのデモ
+- examples/compound_assign.pg - 複合代入演算子のデモ
+- examples/simple_petitgo.pg - 包括的機能テスト
+- examples/self_test.pg - セルフホスティング準備テスト
+
 ### 次回の作業
-- Phase 9: Self-hosting の実装開始
-- petitgo ソースコードを petitgo でコンパイルできるようにする
-- 必要な Go 機能の追加実装から着手
+- switch 文の codegen と eval 実装完了
+- 構造体フィールドアクセス (obj.field) の実装
+- 基本的なスライス操作の実装
+- 文字列比較と操作の実装
+- 最小限 petitgo コンパイラのセルフホスティング検証

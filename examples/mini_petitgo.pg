@@ -1,0 +1,21 @@
+// Minimal petitgo subset that could be self-hosted
+func main() {
+    // Simple calculator functionality
+    x := 10
+    y := 20
+    
+    // Basic operations
+    sum := x + y
+    println(sum)
+    
+    // Control flow
+    if sum > 25 {
+        println("Large sum")
+    }
+    
+    // Loops
+    for i := 0; i < 3; i++ {
+        result := sum + i
+        println(result)
+    }
+}

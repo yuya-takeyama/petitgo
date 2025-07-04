@@ -1,0 +1,15 @@
+// Simple petitgo-style program
+func main() {
+    // Variable declarations and reassignments
+    x := 10
+    y := 20
+    x = x + y // Reassignment
+    
+    // Function calls
+    println(x)
+    
+    // Control flow
+    if x > 25 {
+        println("x is greater than 25")
+    }
+}
