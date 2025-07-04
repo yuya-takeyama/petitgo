@@ -43,3 +43,29 @@ func TestLexer_NextToken_DifferentNumbers(t *testing.T) {
 		}
 	}
 }
+
+func TestLexer_NextToken_Operators(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedType    TokenType
+		expectedLiteral string
+	}{
+		{"+", PLUS, "+"},
+		{"-", MINUS, "-"},
+		{"*", STAR, "*"},
+		{"/", SLASH, "/"},
+	}
+	
+	for _, tt := range tests {
+		lexer := NewLexer(tt.input)
+		token := lexer.NextToken()
+		
+		if token.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%s, got=%s", tt.expectedType, token.Type)
+		}
+		
+		if token.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, token.Literal)
+		}
+	}
+}
