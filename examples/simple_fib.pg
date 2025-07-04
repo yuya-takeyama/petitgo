@@ -1,0 +1,15 @@
+package main
+
+func fibonacci(n int) int {
+    if n <= 1 {
+        return n
+    }
+    return 1
+}
+
+func main() {
+    result := fibonacci(0)
+    println(result)
+    result = fibonacci(1)
+    println(result)
+}
