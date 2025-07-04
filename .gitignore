@@ -32,8 +32,10 @@ go.work.sum
 .DS_Store
 Thumbs.db
 
-# Claude Code settings
-.claude/
+# Claude Code settings (keep project settings)
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
 
 # Build output
 petitgo
