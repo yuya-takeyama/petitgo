@@ -46,6 +46,7 @@ const (
 	RPAREN // )
 	LBRACE // {
 	RBRACE // }
+	COMMA  // ,
 	operator_end
 
 	keyword_beg
@@ -55,6 +56,10 @@ const (
 	FOR      // for
 	BREAK    // break
 	CONTINUE // continue
+	FUNC     // func
+	RETURN   // return
+	TRUE     // true
+	FALSE    // false
 	keyword_end
 )
 

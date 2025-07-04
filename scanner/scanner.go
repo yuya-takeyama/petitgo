@@ -9,6 +9,10 @@ var keywords = map[string]token.Token{
 	"for":      token.FOR,
 	"break":    token.BREAK,
 	"continue": token.CONTINUE,
+	"func":     token.FUNC,
+	"return":   token.RETURN,
+	"true":     token.TRUE,
+	"false":    token.FALSE,
 	"var":      token.IDENT, // var is handled as token.IDENT for now
 }
 
@@ -109,6 +113,9 @@ func (s *Scanner) NextToken() token.TokenInfo {
 	case '}':
 		s.position++
 		return token.TokenInfo{Type: token.RBRACE, Literal: "}"}
+	case ',':
+		s.position++
+		return token.TokenInfo{Type: token.COMMA, Literal: ","}
 	}
 
 	// Read identifier (starts with letter)

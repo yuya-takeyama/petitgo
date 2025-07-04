@@ -43,6 +43,10 @@ func (p *Parser) ParseStatement() ast.Statement {
 		return p.parseBreakStatement()
 	case token.CONTINUE:
 		return p.parseContinueStatement()
+	case token.FUNC:
+		return p.parseFuncStatement()
+	case token.RETURN:
+		return p.parseReturnStatement()
 	case token.LBRACE:
 		return p.parseBlockStatement()
 	default:
@@ -263,6 +267,16 @@ func (p *Parser) parseFactor() ast.ASTNode {
 		return &ast.NumberNode{Value: value}
 	}
 
+	if p.currentToken.Type == token.TRUE {
+		p.nextToken()
+		return &ast.BooleanNode{Value: true}
+	}
+
+	if p.currentToken.Type == token.FALSE {
+		p.nextToken()
+		return &ast.BooleanNode{Value: false}
+	}
+
 	if p.currentToken.Type == token.IDENT {
 		name := p.currentToken.Literal
 		p.nextToken()
@@ -277,7 +291,11 @@ func (p *Parser) parseFactor() ast.ASTNode {
 			for p.currentToken.Type != token.RPAREN && p.currentToken.Type != token.EOF {
 				arg := p.ParseExpression()
 				arguments = append(arguments, arg)
-				// カンマは今回スキップ（簡単のため）
+
+				// カンマをスキップ
+				if p.currentToken.Type == token.COMMA {
+					p.nextToken()
+				}
 			}
 
 			if p.currentToken.Type == token.RPAREN {
@@ -301,4 +319,79 @@ func (p *Parser) parseFactor() ast.ASTNode {
 
 	// エラーケース: とりあえず 0 を返す
 	return &ast.NumberNode{Value: 0}
+}
+
+// parseFuncStatement parses function definitions: func name(param type, ...) returnType { body }
+func (p *Parser) parseFuncStatement() ast.Statement {
+	// consume 'func'
+	p.nextToken()
+
+	// function name
+	name := p.currentToken.Literal
+	p.nextToken()
+
+	// consume '('
+	if p.currentToken.Type != token.LPAREN {
+		// Error: expected '('
+		return nil
+	}
+	p.nextToken()
+
+	// parse parameters
+	parameters := []ast.Parameter{}
+	for p.currentToken.Type != token.RPAREN && p.currentToken.Type != token.EOF {
+		// parameter name
+		paramName := p.currentToken.Literal
+		p.nextToken()
+
+		// parameter type
+		paramType := p.currentToken.Literal
+		p.nextToken()
+
+		parameters = append(parameters, ast.Parameter{Name: paramName, Type: paramType})
+
+		// skip comma if present
+		if p.currentToken.Type == token.COMMA {
+			p.nextToken()
+		}
+	}
+
+	// consume ')'
+	if p.currentToken.Type == token.RPAREN {
+		p.nextToken()
+	}
+
+	// return type (optional for now, default to empty)
+	returnType := ""
+	if p.currentToken.Type == token.IDENT {
+		returnType = p.currentToken.Literal
+		p.nextToken()
+	}
+
+	// function body
+	var body *ast.BlockStatement
+	if p.currentToken.Type == token.LBRACE {
+		body = p.parseBlockStatement()
+	}
+
+	return &ast.FuncStatement{
+		Name:       name,
+		Parameters: parameters,
+		ReturnType: returnType,
+		Body:       body,
+	}
+}
+
+// parseReturnStatement parses return statements: return [expression]
+func (p *Parser) parseReturnStatement() ast.Statement {
+	// consume 'return'
+	p.nextToken()
+
+	// parse optional return value
+	var value ast.ASTNode
+	if p.currentToken.Type != token.EOF && p.currentToken.Type != token.RBRACE {
+		value = p.ParseExpression()
+	}
+
+	return &ast.ReturnStatement{Value: value}
 }

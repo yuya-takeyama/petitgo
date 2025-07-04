@@ -16,6 +16,24 @@ func (n *NumberNode) String() string {
 	return "NumberNode"
 }
 
+// BooleanNode represents a boolean literal
+type BooleanNode struct {
+	Value bool
+}
+
+func (n *BooleanNode) String() string {
+	return "BooleanNode"
+}
+
+// StringNode represents a string literal
+type StringNode struct {
+	Value string
+}
+
+func (n *StringNode) String() string {
+	return "StringNode"
+}
+
 // BinaryOpNode represents a binary operation
 type BinaryOpNode struct {
 	Left     ASTNode
@@ -125,4 +143,31 @@ type ExpressionStatement struct {
 
 func (n *ExpressionStatement) String() string {
 	return "ExpressionStatement"
+}
+
+// Parameter represents a function parameter
+type Parameter struct {
+	Name string
+	Type string
+}
+
+// FuncStatement represents a function definition
+type FuncStatement struct {
+	Name       string
+	Parameters []Parameter
+	ReturnType string
+	Body       *BlockStatement
+}
+
+func (n *FuncStatement) String() string {
+	return "FuncStatement"
+}
+
+// ReturnStatement represents a return statement
+type ReturnStatement struct {
+	Value ASTNode // nil for empty return
+}
+
+func (n *ReturnStatement) String() string {
+	return "ReturnStatement"
 }

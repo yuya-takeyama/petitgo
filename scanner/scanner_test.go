@@ -213,6 +213,20 @@ func TestLexer_NextToken_LogicalOperators(t *testing.T) {
 	}
 }
 
+func TestLexer_NextToken_Comma(t *testing.T) {
+	input := ","
+	scanner := NewScanner(input)
+	tok := scanner.NextToken()
+
+	if tok.Type != token.COMMA {
+		t.Fatalf("token type wrong. expected=%d, got=%d", token.COMMA, tok.Type)
+	}
+
+	if tok.Literal != "," {
+		t.Fatalf("token literal wrong. expected=%s, got=%s", ",", tok.Literal)
+	}
+}
+
 func TestLexer_NextToken_Braces(t *testing.T) {
 	tests := []struct {
 		input           string
@@ -248,6 +262,8 @@ func TestLexer_NextToken_Keywords(t *testing.T) {
 		{"for", token.FOR, "for"},
 		{"break", token.BREAK, "break"},
 		{"continue", token.CONTINUE, "continue"},
+		{"func", token.FUNC, "func"},
+		{"return", token.RETURN, "return"},
 	}
 
 	for _, tt := range tests {

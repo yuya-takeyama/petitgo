@@ -12,6 +12,11 @@ type ControlFlowException struct {
 	Type string // "break" or "continue"
 }
 
+// ReturnException for return statements
+type ReturnException struct {
+	Value int
+}
+
 // printInt converts an integer to string and outputs it (without fmt package)
 func printInt(n int) {
 	if n == 0 {
@@ -47,6 +52,11 @@ func EvalWithEnvironment(node ast.ASTNode, env *Environment) int {
 	switch n := node.(type) {
 	case *ast.NumberNode:
 		return n.Value
+	case *ast.BooleanNode:
+		if n.Value {
+			return 1 // true = 1
+		}
+		return 0 // false = 0
 	case *ast.VariableNode:
 		if value, exists := env.Get(n.Name); exists {
 			return value
@@ -97,10 +107,16 @@ func EvalWithEnvironment(node ast.ASTNode, env *Environment) int {
 			return 0
 		}
 	case *ast.CallNode:
+		// Built-in function: print
 		if n.Function == "print" && len(n.Arguments) > 0 {
 			value := EvalWithEnvironment(n.Arguments[0], env)
 			printInt(value)
 			return value
+		}
+
+		// User-defined function
+		if function, exists := env.GetFunction(n.Function); exists {
+			return callUserFunction(function, n.Arguments, env)
 		}
 	}
 
@@ -146,6 +162,22 @@ func EvalStatement(stmt ast.Statement, env *Environment) {
 		// TODO: implement proper break handling
 	case *ast.ContinueStatement:
 		// TODO: implement proper continue handling
+	case *ast.FuncStatement:
+		// Register function in environment
+		function := &Function{
+			Name:       s.Name,
+			Parameters: s.Parameters,
+			ReturnType: s.ReturnType,
+			Body:       s.Body,
+		}
+		env.SetFunction(s.Name, function)
+	case *ast.ReturnStatement:
+		// Handle return statement with exception
+		value := 0
+		if s.Value != nil {
+			value = EvalWithEnvironment(s.Value, env)
+		}
+		panic(&ReturnException{Value: value})
 	}
 }
 
@@ -153,4 +185,43 @@ func EvalBlockStatement(block *ast.BlockStatement, env *Environment) {
 	for _, stmt := range block.Statements {
 		EvalStatement(stmt, env)
 	}
+}
+
+// callUserFunction calls a user-defined function with arguments
+func callUserFunction(function *Function, args []ast.ASTNode, env *Environment) int {
+	// Create new scope for function execution
+	localEnv := NewEnvironment()
+
+	// Copy current environment's functions to local scope
+	for name, fn := range env.functions {
+		localEnv.SetFunction(name, fn)
+	}
+
+	// Bind arguments to parameters
+	for i, param := range function.Parameters {
+		if i < len(args) {
+			value := EvalWithEnvironment(args[i], env)
+			localEnv.Set(param.Name, value)
+		}
+	}
+
+	// Execute function body with return handling
+	returnValue := 0
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				if returnEx, ok := r.(*ReturnException); ok {
+					// Capture return value
+					returnValue = returnEx.Value
+				} else {
+					// Re-panic for other exceptions
+					panic(r)
+				}
+			}
+		}()
+
+		EvalBlockStatement(function.Body, localEnv)
+	}()
+
+	return returnValue
 }
