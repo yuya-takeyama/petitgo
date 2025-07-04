@@ -7,12 +7,24 @@ petitgo は小さな Go 実装で、最終的にはセルフホスト（自分�
 
 ## Development Phases
 
-### Phase 1: Minimal Calculator (現在ここ)
+### Phase 1: Minimal Calculator (現在ここ - Lexer 完了)
 - **目標**: 四則演算ができる最小限のインタープリタ
 - **実装内容**:
   - [x] プロジェクトのセットアップ
-  - [ ] 字句解析器（Lexer）- 数値と演算子のトークン化
+    - [x] Go 1.24.4 環境
+    - [x] Git リポジトリ初期化
+    - [x] 開発ツール設定（Prettier、aqua、gofmt hook）
+  - [x] 字句解析器（Lexer）- 数値と演算子のトークン化
+    - [x] Go 本家互換の Token 型定義
+    - [x] 数値（INT）のトークン化
+    - [x] 演算子（ADD, SUB, MUL, QUO）のトークン化
+    - [x] 括弧（LPAREN, RPAREN）のトークン化
+    - [x] 空白文字のスキップ処理
+    - [x] 包括的なテストスイート
   - [ ] パーサー - 四則演算の式をパース
+    - [ ] AST ノードの定義
+    - [ ] 再帰下降パーサーの実装
+    - [ ] 演算子優先順位の処理
   - [ ] 評価器（Evaluator）- 式を評価して結果を返す
   - [ ] print 関数 - 結果を出力（fmt パッケージなしで実装）
   - [ ] REPL - 対話的に式を評価
