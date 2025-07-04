@@ -6,15 +6,15 @@ import (
 
 func TestLexer_NextToken_SingleNumber(t *testing.T) {
 	input := "123"
-	
+
 	lexer := NewLexer(input)
-	
+
 	token := lexer.NextToken()
-	
+
 	if token.Type != NUMBER {
 		t.Fatalf("token type wrong. expected=%s, got=%s", NUMBER, token.Type)
 	}
-	
+
 	if token.Literal != "123" {
 		t.Fatalf("token literal wrong. expected=%s, got=%s", "123", token.Literal)
 	}
@@ -29,15 +29,15 @@ func TestLexer_NextToken_DifferentNumbers(t *testing.T) {
 		{"1", "1"},
 		{"99999", "99999"},
 	}
-	
+
 	for _, tt := range tests {
 		lexer := NewLexer(tt.input)
 		token := lexer.NextToken()
-		
+
 		if token.Type != NUMBER {
 			t.Fatalf("token type wrong. expected=%s, got=%s", NUMBER, token.Type)
 		}
-		
+
 		if token.Literal != tt.expectedLiteral {
 			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, token.Literal)
 		}
@@ -55,15 +55,15 @@ func TestLexer_NextToken_Operators(t *testing.T) {
 		{"*", STAR, "*"},
 		{"/", SLASH, "/"},
 	}
-	
+
 	for _, tt := range tests {
 		lexer := NewLexer(tt.input)
 		token := lexer.NextToken()
-		
+
 		if token.Type != tt.expectedType {
 			t.Fatalf("token type wrong. expected=%s, got=%s", tt.expectedType, token.Type)
 		}
-		
+
 		if token.Literal != tt.expectedLiteral {
 			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, token.Literal)
 		}
@@ -79,17 +79,45 @@ func TestLexer_NextToken_Parentheses(t *testing.T) {
 		{"(", LPAREN, "("},
 		{")", RPAREN, ")"},
 	}
-	
+
 	for _, tt := range tests {
 		lexer := NewLexer(tt.input)
 		token := lexer.NextToken()
-		
+
 		if token.Type != tt.expectedType {
 			t.Fatalf("token type wrong. expected=%s, got=%s", tt.expectedType, token.Type)
 		}
-		
+
 		if token.Literal != tt.expectedLiteral {
 			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, token.Literal)
+		}
+	}
+}
+
+func TestLexer_NextToken_WhitespaceSkipping(t *testing.T) {
+	input := "  123  +  456  "
+
+	expected := []struct {
+		expectedType    TokenType
+		expectedLiteral string
+	}{
+		{NUMBER, "123"},
+		{PLUS, "+"},
+		{NUMBER, "456"},
+		{EOF, ""},
+	}
+
+	lexer := NewLexer(input)
+
+	for i, tt := range expected {
+		token := lexer.NextToken()
+
+		if token.Type != tt.expectedType {
+			t.Fatalf("test[%d] - token type wrong. expected=%s, got=%s", i, tt.expectedType, token.Type)
+		}
+
+		if token.Literal != tt.expectedLiteral {
+			t.Fatalf("test[%d] - token literal wrong. expected=%s, got=%s", i, tt.expectedLiteral, token.Literal)
 		}
 	}
 }

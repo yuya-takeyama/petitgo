@@ -28,13 +28,16 @@ func NewLexer(input string) *Lexer {
 }
 
 func (l *Lexer) NextToken() Token {
+	// 空白文字をスキップ
+	l.skipWhitespace()
+
 	// 入力の終端チェック
 	if l.position >= len(l.input) {
 		return Token{Type: EOF, Literal: ""}
 	}
-	
+
 	ch := l.input[l.position]
-	
+
 	// 演算子と括弧の判定
 	switch ch {
 	case '+':
@@ -56,21 +59,21 @@ func (l *Lexer) NextToken() Token {
 		l.position++
 		return Token{Type: RPAREN, Literal: ")"}
 	}
-	
+
 	// 数字を読み取る
 	if isDigit(ch) {
 		start := l.position
 		for l.position < len(l.input) && isDigit(l.input[l.position]) {
 			l.position++
 		}
-		
+
 		literal := l.input[start:l.position]
 		return Token{
 			Type:    NUMBER,
 			Literal: literal,
 		}
 	}
-	
+
 	// 未知の文字
 	l.position++
 	return Token{Type: EOF, Literal: ""}
@@ -78,4 +81,14 @@ func (l *Lexer) NextToken() Token {
 
 func isDigit(ch byte) bool {
 	return ch >= '0' && ch <= '9'
+}
+
+func (l *Lexer) skipWhitespace() {
+	for l.position < len(l.input) && isWhitespace(l.input[l.position]) {
+		l.position++
+	}
+}
+
+func isWhitespace(ch byte) bool {
+	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'
 }
