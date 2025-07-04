@@ -54,7 +54,7 @@ petitgo は小さな Go 実装で、最終的にはセルフホスト（自分�
   - [x] 引数と戻り値
   - [ ] クロージャ（未実装）
 
-### Phase 5: Type System 🚧 **進行中（現在ここ）**
+### Phase 5: Type System ✅ **完了**
 - **目標**: Go の型システムの基本実装
 - **実装内容**:
   - [x] 基本型（int, string, bool）
@@ -73,38 +73,46 @@ petitgo は小さな Go 実装で、最終的にはセルフホスト（自分�
 - := での型推論（x := 42 → int 型として推論）
 - 既存変数への型安全な再代入（型不一致時はゼロ値使用）
 
-**進行中の機能**:
-- StructValue と SliceValue の完全実装（基盤は完成）
-- struct type declarations と field access
-- slice literals と indexing
+### Phase 6: Standard Library (Minimal) ⏭️ **スキップ**
+- **理由**: Go の標準ライブラリを活用する方針に変更
 
-### Phase 6: Standard Library (Minimal)
-- **目標**: 最小限の標準ライブラリ
-- **実装内容**:
-  - [ ] fmt.Print 相当の機能
-  - [ ] 基本的な文字列操作
-  - [ ] 基本的な数学関数
-
-### Phase 7: Packages and Imports
+### Phase 7: Packages and Imports ✅ **基本実装完了**
 - **目標**: パッケージシステムの実装
 - **実装内容**:
-  - [ ] package 宣言
-  - [ ] import 文
-  - [ ] 複数ファイルのサポート
+  - [x] package 宣言のパース
+  - [x] import 文のパース
+  - [ ] 複数ファイルのサポート（将来実装）
 
-### Phase 8: Compiler
+### Phase 8: Compiler ✅ **完了**
 - **目標**: インタープリタからコンパイラへ
 - **実装内容**:
-  - [ ] AST から中間表現（IR）への変換
-  - [ ] 最適化パス
-  - [ ] コード生成
+  - [x] AST から Go ソースコードへの変換
+  - [x] Go コンパイラとの統合
+  - [x] build/run コマンド実装
+  - [x] 組み込み println 関数採用
+  - [x] 包括的サンプルプログラム作成
 
-### Phase 9: Self-hosting
+**達成事項**:
+- 完全な codegen パッケージによる Go ソース生成
+- `petitgo build file.pg` でバイナリ生成
+- `petitgo run file.pg` で直接実行
+- examples/ ディレクトリに8つの実用サンプル
+- Go 組み込み println による見やすい出力
+
+### Phase 9: Self-hosting 🚧 **次の目標**
 - **目標**: petitgo で petitgo をコンパイル
 - **実装内容**:
-  - [ ] petitgo のソースコードを petitgo でパースできるようにする
-  - [ ] 必要な Go の機能をすべて実装
-  - [ ] ブートストラップの実現
+  - [ ] petitgo ソースコードの petitgo 対応
+    - [ ] package/import の複数ファイル対応
+    - [ ] struct/interface の完全実装
+    - [ ] map, slice の完全サポート
+  - [ ] 必要な Go 機能の追加実装
+    - [ ] 変数再代入（x = y）
+    - [ ] コメント（// と /* */）
+    - [ ] より複雑な制御構文
+  - [ ] ブートストラップ処理
+    - [ ] petitgo 自身のコンパイル検証
+    - [ ] セルフコンパイル可能性の確認
 
 ## Design Principles
 

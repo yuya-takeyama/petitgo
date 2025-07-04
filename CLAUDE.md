@@ -206,7 +206,7 @@ petitgo/
 - REPL 動作確認完了
 - ファイル命名規則の統一
 
-### Phase 5: Type System 🚧 **大幅進捗！**
+### Phase 5: Type System ✅ **完了！**
 
 - [x] Value インターフェース設計（完了）
   - [x] IntValue, StringValue, BoolValue の実装
@@ -259,9 +259,89 @@ petitgo/
     └── repl.go
 ```
 
-**次の実装予定:**
-- [ ] struct type declarations の完全実装
-- [ ] struct field access の改善
-- [ ] slice literals と indexing の完全実装
-- [ ] parser tests の修正（parseIfCondition影響）
-- [ ] REPL での型情報表示改善
+### Phase 8: Compiler ✅ **完了！**
+
+- [x] AST から Go ソースコード生成（完了）
+  - [x] 完全な codegen パッケージ実装
+  - [x] 全 AST ノード対応（statements, expressions）
+  - [x] 演算子、関数呼び出し、制御構文サポート
+- [x] build/run コマンド実装（完了）
+  - [x] `petitgo build file.pg` - 実行可能バイナリ生成
+  - [x] `petitgo run file.pg` - 直接実行
+  - [x] Go コンパイラとの統合
+- [x] package/import 文サポート（完了）
+  - [x] package 宣言のパース
+  - [x] import 文のパース
+  - [x] 基本的なパッケージ管理
+- [x] 組み込み println 関数採用（完了）
+  - [x] Go 組み込み println 使用
+  - [x] 自動改行付き出力
+  - [x] カスタム print 関数削除
+- [x] 包括的サンプルコード（完了）
+  - [x] examples/ ディレクトリ
+  - [x] 8つの実用的サンプル
+  - [x] 詳細な README.md
+
+**現在のファイル構造:**
+
+```
+petitgo/
+├── main.go              # CLI entry point with build/run commands
+├── token/              # Token definitions
+│   └── token.go
+├── scanner/            # Lexical analysis
+│   ├── scanner.go
+│   ├── scanner_test.go
+│   └── scanner_identifiers_test.go
+├── ast/                # AST node definitions
+│   └── ast.go
+├── parser/             # Syntax analysis
+│   ├── parser.go
+│   └── parser_test.go
+├── eval/               # Evaluation with type system
+│   ├── environment.go
+│   ├── eval.go
+│   ├── value.go        # Value interface & implementations
+│   ├── slice_test.go
+│   ├── struct_test.go
+│   ├── type_checking_test.go
+│   ├── type_inference_test.go
+│   └── type_system_test.go
+├── codegen/            # Go source code generation
+│   └── codegen.go
+├── repl/               # REPL
+│   └── repl.go
+├── examples/           # Sample programs
+│   ├── README.md
+│   ├── hello.pg
+│   ├── calculator.pg
+│   ├── variables.pg
+│   ├── conditionals.pg
+│   ├── functions.pg
+│   ├── fibonacci.pg
+│   └── simple_if.pg
+└── check_newlines.py   # Development tool
+```
+
+**動作実績:**
+- ✅ 基本的な petitgo プログラムのコンパイル・実行成功
+- ✅ 四則演算、変数、関数、if文など主要機能対応
+- ✅ Go 本家互換の println 出力
+- ✅ ビルド時間も高速（Go コンパイラ活用）
+
+**既知の課題:**
+- ⚠️ 括弧による演算子優先順位制御（`(x+y)*2` が正しく動作しない）
+- ⚠️ for 文の完全実装
+- ⚠️ 変数再代入（`x = y`）未対応
+- ⚠️ コメント（`//`）未対応
+
+### Phase 9: Self-hosting 🚧 **次の目標**
+
+- [ ] petitgo ソースコードの petitgo 対応
+- [ ] 必要な Go 機能の追加実装
+- [ ] ブートストラップ処理
+- [ ] セルフコンパイル検証
+
+## 開発メモリ
+
+- 作業がある程度進んだら docs を更新して /clear に備えます

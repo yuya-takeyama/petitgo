@@ -9,6 +9,16 @@
             "command": ".claude/hooks/gofmt.sh"
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "condition": "files_match('**/*.md')",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/prettier.sh"
+          }
+        ]
       }
     ]
   }
