@@ -57,6 +57,10 @@ func EvalWithEnvironment(node ast.ASTNode, env *Environment) int {
 			return 1 // true = 1
 		}
 		return 0 // false = 0
+	case *ast.StringNode:
+		// For now, return string length as evaluation result
+		// In the future, we'll need proper type system
+		return len(n.Value)
 	case *ast.VariableNode:
 		if value, exists := env.Get(n.Name); exists {
 			return value

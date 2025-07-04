@@ -277,6 +277,12 @@ func (p *Parser) parseFactor() ast.ASTNode {
 		return &ast.BooleanNode{Value: false}
 	}
 
+	if p.currentToken.Type == token.STRING {
+		value := p.currentToken.Literal
+		p.nextToken()
+		return &ast.StringNode{Value: value}
+	}
+
 	if p.currentToken.Type == token.IDENT {
 		name := p.currentToken.Literal
 		p.nextToken()

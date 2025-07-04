@@ -116,6 +116,8 @@ func (s *Scanner) NextToken() token.TokenInfo {
 	case ',':
 		s.position++
 		return token.TokenInfo{Type: token.COMMA, Literal: ","}
+	case '"':
+		return s.readString()
 	}
 
 	// Read identifier (starts with letter)
@@ -176,4 +178,62 @@ func (s *Scanner) skipWhitespace() {
 
 func isWhitespace(ch byte) bool {
 	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'
+}
+
+// readString reads a string literal from input
+func (s *Scanner) readString() token.TokenInfo {
+	start := s.position
+	s.position++ // skip opening quote
+
+	for s.position < len(s.input) && s.input[s.position] != '"' {
+		// Handle escape sequences
+		if s.input[s.position] == '\\' && s.position+1 < len(s.input) {
+			s.position += 2 // skip escape sequence
+		} else {
+			s.position++
+		}
+	}
+
+	if s.position >= len(s.input) {
+		// Unclosed string literal - return error token
+		return token.TokenInfo{Type: token.ILLEGAL, Literal: "unclosed string"}
+	}
+
+	// Extract string content (without quotes)
+	literal := s.input[start+1 : s.position]
+	s.position++ // skip closing quote
+
+	// Process escape sequences
+	processed := processEscapeSequences(literal)
+
+	return token.TokenInfo{Type: token.STRING, Literal: processed}
+}
+
+// processEscapeSequences handles basic escape sequences
+func processEscapeSequences(input string) string {
+	result := ""
+	for i := 0; i < len(input); i++ {
+		if input[i] == '\\' && i+1 < len(input) {
+			switch input[i+1] {
+			case 'n':
+				result += "\n"
+			case 't':
+				result += "\t"
+			case 'r':
+				result += "\r"
+			case '"':
+				result += "\""
+			case '\\':
+				result += "\\"
+			default:
+				// Unknown escape sequence, keep as is
+				result += string(input[i])
+				result += string(input[i+1])
+			}
+			i++ // skip next character
+		} else {
+			result += string(input[i])
+		}
+	}
+	return result
 }
