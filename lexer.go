@@ -27,6 +27,8 @@ const (
 	QUO // /
 	REM // %
 
+	ASSIGN // := or =
+
 	LPAREN // (
 	RPAREN // )
 	operator_end
@@ -71,12 +73,34 @@ func (l *Lexer) NextToken() TokenInfo {
 	case '/':
 		l.position++
 		return TokenInfo{Type: QUO, Literal: "/"}
+	case ':':
+		if l.position+1 < len(l.input) && l.input[l.position+1] == '=' {
+			l.position += 2
+			return TokenInfo{Type: ASSIGN, Literal: ":="}
+		}
+	case '=':
+		l.position++
+		return TokenInfo{Type: ASSIGN, Literal: "="}
 	case '(':
 		l.position++
 		return TokenInfo{Type: LPAREN, Literal: "("}
 	case ')':
 		l.position++
 		return TokenInfo{Type: RPAREN, Literal: ")"}
+	}
+
+	// 識別子を読み取る（文字で始まる）
+	if isLetter(ch) {
+		start := l.position
+		for l.position < len(l.input) && (isLetter(l.input[l.position]) || isDigit(l.input[l.position])) {
+			l.position++
+		}
+
+		literal := l.input[start:l.position]
+		return TokenInfo{
+			Type:    IDENT,
+			Literal: literal,
+		}
 	}
 
 	// 数字を読み取る
@@ -100,6 +124,10 @@ func (l *Lexer) NextToken() TokenInfo {
 
 func isDigit(ch byte) bool {
 	return ch >= '0' && ch <= '9'
+}
+
+func isLetter(ch byte) bool {
+	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_'
 }
 
 func (l *Lexer) skipWhitespace() {
