@@ -48,15 +48,52 @@ func main() {
 			}
 			asmFile(os.Args[2])
 			return
+		case "help", "-h", "--help":
+			showHelp()
+			return
 		default:
 			fmt.Printf("Unknown command: %s\n", command)
-			fmt.Println("Available commands: build, run, ast, asm")
+			fmt.Println("Available commands: build, run, ast, asm, help")
 			os.Exit(1)
 		}
 	}
 
 	// REPLを起動
 	repl.StartREPL()
+}
+
+// showHelp displays usage information and available commands
+func showHelp() {
+	fmt.Println("petitgo - A minimal Go implementation aiming for self-hosting capability")
+	fmt.Println("")
+	fmt.Println("USAGE:")
+	fmt.Println("  petitgo [command] [arguments]")
+	fmt.Println("")
+	fmt.Println("COMMANDS:")
+	fmt.Println("  build <file.pg>    Compile a petitgo program to native binary")
+	fmt.Println("  run <file.pg>      Compile and run a petitgo program")
+	fmt.Println("  ast <file.pg>      Display the Abstract Syntax Tree as JSON")
+	fmt.Println("  asm <file.pg>      Generate ARM64 assembly code")
+	fmt.Println("  help, -h, --help   Show this help message")
+	fmt.Println("")
+	fmt.Println("EXAMPLES:")
+	fmt.Println("  petitgo                    # Start interactive REPL")
+	fmt.Println("  petitgo run examples/fibonacci.pg")
+	fmt.Println("  petitgo build hello.pg     # Creates 'hello' executable")
+	fmt.Println("  petitgo ast program.pg     # View AST structure")
+	fmt.Println("  petitgo asm program.pg     # View generated assembly")
+	fmt.Println("")
+	fmt.Println("PETITGO LANGUAGE FEATURES:")
+	fmt.Println("  - Arithmetic operations (+, -, *, /)")
+	fmt.Println("  - Variables and assignments (x := 10, x = 20)")
+	fmt.Println("  - Control flow (if/else, for, switch/case)")
+	fmt.Println("  - Functions with parameters and return values")
+	fmt.Println("  - Basic types (int, string, bool)")
+	fmt.Println("  - Struct definitions and field access")
+	fmt.Println("  - Comments (// and /* */)")
+	fmt.Println("  - Built-in functions: println(), len(), append()")
+	fmt.Println("")
+	fmt.Println("For more information, visit: https://github.com/yuya-takeyama/petitgo")
 }
 
 // buildFile compiles a petitgo file to a Go executable
