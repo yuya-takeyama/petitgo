@@ -3,20 +3,20 @@ func main() {
     y := 5
     
     if x > y {
-        print(1)
+        println(1)
     }
     
     if x < y {
-        print(2)
+        println(2)
     } else {
-        print(3)
+        println(3)
     }
     
     if x == 10 {
-        print(4)
+        println(4)
     }
     
     if x != y {
-        print(5)
+        println(5)
     }
 }

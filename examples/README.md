@@ -56,10 +56,10 @@ Recursive fibonacci calculation with for loops.
 ## Working Examples
 
 ✅ **hello.pg**: `42`  
-✅ **calculator.pg**: `1555022020` (15, 5, 50, 2, 20, 30 concatenated)  
-✅ **variables.pg**: `5210100` (52, 10, 100 concatenated)  
+✅ **calculator.pg**: Outputs `15`, `5`, `50`, `2`, `20`, `30` (each on new line)  
+✅ **variables.pg**: Outputs `52`, `10`, `100` (each on new line)  
 ✅ **simple_if.pg**: `1`  
-✅ **functions.pg**: `81510` (8, 15, 10 concatenated)
+✅ **functions.pg**: Outputs `8`, `15`, `10` (each on new line)
 
 ## Partially Working
 
@@ -68,7 +68,7 @@ Recursive fibonacci calculation with for loops.
 
 ## Notes
 
-- Print outputs are concatenated without newlines
+- Uses Go's built-in `println()` function for output with automatic newlines
 - Variable reassignment (`x = y`) not implemented yet, use new variables
 - Comments (`//`) not implemented yet
 - For loops need more work

@@ -34,14 +34,8 @@ func (g *Generator) GenerateProgram(statements []ast.Statement) string {
 	g.writeLine("package main")
 	g.writeLine("")
 
-	// Add imports
-	g.writeLine("import (")
-	g.writeLine("\t\"os\"")
-	g.writeLine(")")
+	// Add imports - none needed for println as it's built-in
 	g.writeLine("")
-
-	// Add custom print function
-	g.addPrintFunction()
 
 	// Check if there's already a main function
 	hasMainFunc := false
@@ -95,7 +89,7 @@ func (g *Generator) generateNode(node ast.ASTNode) {
 		g.generateNode(n.Right)
 	case *ast.CallNode:
 		if n.Function == "print" {
-			g.write("printInt(")
+			g.write("println(")
 		} else {
 			g.write(n.Function + "(")
 		}
@@ -206,29 +200,6 @@ func (g *Generator) generateOperator(op token.Token) {
 	default:
 		g.write("/*unknown op*/")
 	}
-}
-
-func (g *Generator) addPrintFunction() {
-	g.writeLine("// Custom print function for petitgo compatibility")
-	g.writeLine("func printInt(n int) {")
-	g.writeLine("\tif n == 0 {")
-	g.writeLine("\t\tos.Stdout.Write([]byte(\"0\"))")
-	g.writeLine("\t\treturn")
-	g.writeLine("\t}")
-	g.writeLine("")
-	g.writeLine("\tif n < 0 {")
-	g.writeLine("\t\tos.Stdout.Write([]byte(\"-\"))")
-	g.writeLine("\t\tn = -n")
-	g.writeLine("\t}")
-	g.writeLine("")
-	g.writeLine("\tdigits := []byte{}")
-	g.writeLine("\tfor n > 0 {")
-	g.writeLine("\t\tdigits = append([]byte{byte('0' + n%10)}, digits...)")
-	g.writeLine("\t\tn /= 10")
-	g.writeLine("\t}")
-	g.writeLine("\tos.Stdout.Write(digits)")
-	g.writeLine("}")
-	g.writeLine("")
 }
 
 func (g *Generator) write(s string) {

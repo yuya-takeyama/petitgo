@@ -7,14 +7,14 @@ func main() {
     prod := x * y
     quot := x / y
     
-    print(sum)
-    print(diff)
-    print(prod)
-    print(quot)
+    println(sum)
+    println(diff)
+    println(prod)
+    println(quot)
     
     result := x + y * 2
-    print(result)
+    println(result)
     
     result2 := (x + y) * 2
-    print(result2)
+    println(result2)
 }

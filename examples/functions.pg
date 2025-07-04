@@ -14,9 +14,9 @@ func main() {
     sum := add(x, y)
     product := multiply(x, y)
     
-    print(sum)
-    print(product)
+    println(sum)
+    println(product)
     
     result := add(multiply(2, 3), 4)
-    print(result)
+    println(result)
 }
