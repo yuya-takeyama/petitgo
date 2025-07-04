@@ -1,0 +1,7 @@
+package main
+
+func main() {
+    var p Person
+    p.Name = "Alice"
+    println(p.Name)
+}

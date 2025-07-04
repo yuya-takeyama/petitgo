@@ -64,6 +64,8 @@ func (p *Parser) ParseStatement() ast.Statement {
 		return p.parseForStatement()
 	case token.SWITCH:
 		return p.parseSwitchStatement()
+	case token.TYPE:
+		return p.parseTypeStatement()
 	case token.BREAK:
 		return p.parseBreakStatement()
 	case token.CONTINUE:
@@ -72,8 +74,6 @@ func (p *Parser) ParseStatement() ast.Statement {
 		return p.parseFuncStatement()
 	case token.RETURN:
 		return p.parseReturnStatement()
-	case token.TYPE:
-		return p.parseStructDefinition()
 	case token.PACKAGE:
 		return p.parsePackageStatement()
 	case token.IMPORT:
@@ -194,8 +194,12 @@ func (p *Parser) parseSwitchStatement() ast.Statement {
 	// switch
 	p.nextToken()
 
-	// value to switch on
-	value := p.ParseExpression()
+	// value to switch on - use simple identifier for now to avoid ParseExpression issues
+	if p.currentToken.Type != token.IDENT {
+		return &ast.SwitchStatement{}
+	}
+	value := &ast.VariableNode{Name: p.currentToken.Literal}
+	p.nextToken()
 
 	// {
 	if p.currentToken.Type != token.LBRACE {
@@ -214,7 +218,7 @@ func (p *Parser) parseSwitchStatement() ast.Statement {
 			caseValue := p.ParseExpression()
 
 			// :
-			if p.currentToken.Literal == ":" {
+			if p.currentToken.Type == token.COLON {
 				p.nextToken()
 			}
 
@@ -226,6 +230,9 @@ func (p *Parser) parseSwitchStatement() ast.Statement {
 				p.currentToken.Type != token.EOF {
 				if stmt := p.ParseStatement(); stmt != nil {
 					statements = append(statements, stmt)
+				} else {
+					// If ParseStatement returns nil, advance token to prevent infinite loop
+					p.nextToken()
 				}
 			}
 
@@ -238,7 +245,7 @@ func (p *Parser) parseSwitchStatement() ast.Statement {
 			p.nextToken()
 
 			// :
-			if p.currentToken.Literal == ":" {
+			if p.currentToken.Type == token.COLON {
 				p.nextToken()
 			}
 
@@ -247,6 +254,9 @@ func (p *Parser) parseSwitchStatement() ast.Statement {
 			for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
 				if stmt := p.ParseStatement(); stmt != nil {
 					statements = append(statements, stmt)
+				} else {
+					// If ParseStatement returns nil, advance token to prevent infinite loop
+					p.nextToken()
 				}
 			}
 
@@ -265,6 +275,62 @@ func (p *Parser) parseSwitchStatement() ast.Statement {
 		Value:   value,
 		Cases:   cases,
 		Default: defaultCase,
+	}
+}
+
+func (p *Parser) parseTypeStatement() ast.Statement {
+	// type
+	p.nextToken()
+
+	// type name
+	if p.currentToken.Type != token.IDENT {
+		return &ast.TypeStatement{}
+	}
+	typeName := p.currentToken.Literal
+	p.nextToken()
+
+	// struct
+	if p.currentToken.Literal != "struct" {
+		return &ast.TypeStatement{}
+	}
+	p.nextToken()
+
+	// {
+	if p.currentToken.Type != token.LBRACE {
+		return &ast.TypeStatement{}
+	}
+	p.nextToken()
+
+	var fields []*ast.FieldDef
+
+	// Parse fields
+	for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
+		if p.currentToken.Type == token.IDENT {
+			fieldName := p.currentToken.Literal
+			p.nextToken()
+
+			if p.currentToken.Type == token.IDENT {
+				fieldType := p.currentToken.Literal
+				p.nextToken()
+
+				fields = append(fields, &ast.FieldDef{
+					Name: fieldName,
+					Type: fieldType,
+				})
+			}
+		} else {
+			p.nextToken()
+		}
+	}
+
+	// }
+	if p.currentToken.Type == token.RBRACE {
+		p.nextToken()
+	}
+
+	return &ast.TypeStatement{
+		Name:   typeName,
+		Fields: fields,
 	}
 }
 
@@ -606,7 +672,7 @@ func (p *Parser) parseFactor() ast.ASTNode {
 				if p.currentToken.Type == token.IDENT {
 					fieldName := p.currentToken.Literal
 					p.nextToken()
-					result = &ast.FieldAccess{
+					result = &ast.FieldAccessNode{
 						Object: result,
 						Field:  fieldName,
 					}

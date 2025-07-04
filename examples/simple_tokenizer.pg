@@ -1,0 +1,20 @@
+package main
+
+func main() {
+    input := "1+2"
+    position := 0
+    
+    for position < len(input) {
+        ch := input[position:position+1]
+        
+        if ch == "1" {
+            println("NUMBER: 1")
+        } else if ch == "2" {
+            println("NUMBER: 2")
+        } else if ch == "+" {
+            println("PLUS")
+        }
+        
+        position++
+    }
+}

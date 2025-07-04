@@ -74,7 +74,7 @@ func EvalValueWithEnvironment(node ast.ASTNode, env *Environment) Value {
 		return evalCallWithTypes(n, env)
 	case *ast.StructLiteral:
 		return evalStructLiteral(n, env)
-	case *ast.FieldAccess:
+	case *ast.FieldAccessNode:
 		return evalFieldAccess(n, env)
 	case *ast.SliceLiteral:
 		return evalSliceLiteral(n, env)
@@ -498,6 +498,26 @@ func EvalStatement(stmt ast.Statement, env *Environment) {
 				EvalStatement(s.Update, env)
 			}
 		}
+	case *ast.SwitchStatement:
+		// Evaluate the switch value
+		switchValue := EvalValueWithEnvironment(s.Value, env)
+
+		// Try to match each case
+		matched := false
+		for _, caseStmt := range s.Cases {
+			caseValue := EvalValueWithEnvironment(caseStmt.Value, env)
+			// Simple equality check - could be enhanced for type-aware comparison
+			if switchValue.String() == caseValue.String() {
+				EvalBlockStatement(caseStmt.Body, env)
+				matched = true
+				break // Go switch has implicit break
+			}
+		}
+
+		// If no case matched, execute default block
+		if !matched && s.Default != nil {
+			EvalBlockStatement(s.Default, env)
+		}
 	case *ast.BlockStatement:
 		EvalBlockStatement(s, env)
 	case *ast.BreakStatement:
@@ -663,7 +683,7 @@ func evalStructLiteral(node *ast.StructLiteral, env *Environment) Value {
 }
 
 // evalFieldAccess evaluates field access expressions (obj.field)
-func evalFieldAccess(node *ast.FieldAccess, env *Environment) Value {
+func evalFieldAccess(node *ast.FieldAccessNode, env *Environment) Value {
 	obj := EvalValueWithEnvironment(node.Object, env)
 
 	// Check if object is a struct

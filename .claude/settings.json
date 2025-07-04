@@ -6,7 +6,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/gofmt.sh"
+            "command": "jq -r '.tool_input.file_path | select(endswith(\".go\"))' | xargs -r gofmt -w"
+          },
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path | select(endswith(\".pg\"))' | xargs -r gofmt -w"
           },
           {
             "type": "command",
@@ -14,7 +18,7 @@
           },
           {
             "type": "command",
-            "command": ".claude/hooks/check_newlines.sh"
+            "command": "jq -r '.tool_input.file_path | select(endswith(\".pg\") or endswith(\".sh\"))' | xargs -r python3 tools/check_newlines.py"
           }
         ]
       }

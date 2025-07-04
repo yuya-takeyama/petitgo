@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/yuya-takeyama/petitgo/asmgen"
 	"github.com/yuya-takeyama/petitgo/ast"
 	"github.com/yuya-takeyama/petitgo/codegen"
 	"github.com/yuya-takeyama/petitgo/parser"
@@ -41,9 +42,23 @@ func main() {
 			}
 			astFile(os.Args[2])
 			return
+		case "asm":
+			if len(os.Args) < 3 {
+				fmt.Println("Usage: petitgo asm <file.pg>")
+				os.Exit(1)
+			}
+			asmFile(os.Args[2])
+			return
+		case "native":
+			if len(os.Args) < 3 {
+				fmt.Println("Usage: petitgo native <file.pg>")
+				os.Exit(1)
+			}
+			nativeBuild(os.Args[2])
+			return
 		default:
 			fmt.Printf("Unknown command: %s\n", command)
-			fmt.Println("Available commands: build, run, ast")
+			fmt.Println("Available commands: build, run, ast, asm, native")
 			os.Exit(1)
 		}
 	}
@@ -177,4 +192,72 @@ func astFile(filename string) {
 	}
 
 	fmt.Println(string(jsonBytes))
+}
+
+// asmFile generates ARM64 assembly from petitgo source
+func asmFile(filename string) {
+	// Read the petitgo source file
+	content, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Printf("Error reading file %s: %v\n", filename, err)
+		os.Exit(1)
+	}
+
+	// Parse the petitgo code
+	statements := parseProgram(string(content))
+
+	// Generate ARM64 assembly
+	generator := asmgen.NewAsmGenerator()
+	assembly := generator.Generate(statements)
+	runtime := generator.GenerateRuntime()
+
+	fmt.Print(assembly)
+	fmt.Print(runtime)
+}
+
+// nativeBuild compiles petitgo source to native ARM64 binary
+func nativeBuild(filename string) {
+	// Read the petitgo source file
+	content, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Printf("Error reading file %s: %v\n", filename, err)
+		os.Exit(1)
+	}
+
+	// Parse the petitgo code
+	statements := parseProgram(string(content))
+
+	// Generate ARM64 assembly
+	generator := asmgen.NewAsmGenerator()
+	assembly := generator.Generate(statements)
+	runtime := generator.GenerateRuntime()
+
+	// Write assembly to temporary file
+	asmFile := "/tmp/petitgo_temp.s"
+	fullAsm := assembly + runtime
+	err = os.WriteFile(asmFile, []byte(fullAsm), 0644)
+	if err != nil {
+		fmt.Printf("Error writing assembly file: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Get output filename
+	outputFile := strings.TrimSuffix(filename, filepath.Ext(filename))
+
+	// Assemble and link
+	cmd := exec.Command("as", "-arch", "arm64", "-o", "/tmp/petitgo_temp.o", asmFile)
+	err = cmd.Run()
+	if err != nil {
+		fmt.Printf("Error assembling: %v\n", err)
+		os.Exit(1)
+	}
+
+	cmd = exec.Command("clang", "-arch", "arm64", "-o", outputFile, "/tmp/petitgo_temp.o")
+	err = cmd.Run()
+	if err != nil {
+		fmt.Printf("Error linking: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Successfully compiled %s to native binary %s\n", filename, outputFile)
 }

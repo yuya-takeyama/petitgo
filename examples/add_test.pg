@@ -1,0 +1,6 @@
+package main
+
+func main() {
+    result := 2 + 3
+    println(result)
+}

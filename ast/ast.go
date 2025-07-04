@@ -96,6 +96,24 @@ func (n *VariableNode) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// FieldAccessNode represents field access (obj.field)
+type FieldAccessNode struct {
+	Object ASTNode
+	Field  string
+}
+
+func (n *FieldAccessNode) String() string {
+	return "FieldAccessNode"
+}
+
+func (n *FieldAccessNode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"type":   "FieldAccessNode",
+		"object": n.Object,
+		"field":  n.Field,
+	})
+}
+
 // CallNode represents a function call (function(args...))
 type CallNode struct {
 	Function  string
@@ -263,6 +281,75 @@ func (n *CaseStatement) MarshalJSON() ([]byte, error) {
 		"value": n.Value,
 		"body":  n.Body,
 	})
+}
+
+// TypeStatement represents a type definition (type Name struct {...})
+type TypeStatement struct {
+	Name   string
+	Fields []*FieldDef
+}
+
+func (n *TypeStatement) String() string {
+	return "TypeStatement"
+}
+
+func (n *TypeStatement) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"type":   "TypeStatement",
+		"name":   n.Name,
+		"fields": n.Fields,
+	})
+}
+
+// FieldDef represents a field definition in struct
+type FieldDef struct {
+	Name string
+	Type string
+}
+
+// ArrayLiteral represents an array literal [3]int{1, 2, 3}
+type ArrayLiteral struct {
+	ElementType string
+	Size        int
+	Elements    []ASTNode
+}
+
+func (n *ArrayLiteral) String() string {
+	return "ArrayLiteral"
+}
+
+func (n *ArrayLiteral) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"type":        "ArrayLiteral",
+		"elementType": n.ElementType,
+		"size":        n.Size,
+		"elements":    n.Elements,
+	})
+}
+
+// InterfaceStatement represents interface definition
+type InterfaceStatement struct {
+	Name    string
+	Methods []*MethodDef
+}
+
+func (n *InterfaceStatement) String() string {
+	return "InterfaceStatement"
+}
+
+func (n *InterfaceStatement) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"type":    "InterfaceStatement",
+		"name":    n.Name,
+		"methods": n.Methods,
+	})
+}
+
+// MethodDef represents method definition in interface
+type MethodDef struct {
+	Name       string
+	Parameters []*Parameter
+	ReturnType string
 }
 
 // BlockStatement represents a block of statements ({ ... })

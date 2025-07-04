@@ -1,0 +1,10 @@
+package main
+
+func main() {
+    a := 8
+    b := 3
+    sub := a - b
+    println(sub)
+    mul := a * b
+    println(mul)
+}

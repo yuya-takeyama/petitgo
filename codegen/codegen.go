@@ -81,6 +81,10 @@ func (g *Generator) generateNode(node ast.ASTNode) {
 		}
 	case *ast.VariableNode:
 		g.write(n.Name)
+	case *ast.FieldAccessNode:
+		g.generateNode(n.Object)
+		g.write(".")
+		g.write(n.Field)
 	case *ast.BinaryOpNode:
 		// Always wrap binary operations in parentheses to preserve exact precedence
 		g.write("(")
@@ -103,6 +107,18 @@ func (g *Generator) generateNode(node ast.ASTNode) {
 			g.generateNode(arg)
 		}
 		g.write(")")
+	case *ast.StructLiteral:
+		g.write(n.TypeName + "{")
+		first := true
+		for fieldName, fieldValue := range n.Fields {
+			if !first {
+				g.write(", ")
+			}
+			first = false
+			g.write(fieldName + ": ")
+			g.generateNode(fieldValue)
+		}
+		g.write("}")
 	default:
 		g.write("/* unsupported node */")
 	}
@@ -206,6 +222,75 @@ func (g *Generator) generateStatement(stmt ast.Statement) {
 
 		g.write(" ")
 		g.generateBlockStatement(s.Body)
+	case *ast.SwitchStatement:
+		g.writeIndent()
+		g.write("switch ")
+		g.generateNode(s.Value)
+		g.write(" {\n")
+		g.indent++
+
+		// Generate cases
+		for _, caseStmt := range s.Cases {
+			g.writeIndent()
+			g.write("case ")
+			g.generateNode(caseStmt.Value)
+			g.write(":\n")
+			g.indent++
+			for _, stmt := range caseStmt.Body.Statements {
+				g.generateStatement(stmt)
+				g.writeLine("")
+			}
+			g.indent--
+		}
+
+		// Generate default case if present
+		if s.Default != nil {
+			g.writeIndent()
+			g.write("default:\n")
+			g.indent++
+			for _, stmt := range s.Default.Statements {
+				g.generateStatement(stmt)
+				g.writeLine("")
+			}
+			g.indent--
+		}
+
+		g.indent--
+		g.writeIndent()
+		g.write("}")
+	case *ast.TypeStatement:
+		g.writeIndent()
+		g.write("type " + s.Name + " struct {\n")
+		g.indent++
+		for _, field := range s.Fields {
+			g.writeIndent()
+			g.write(field.Name + " " + field.Type + "\n")
+		}
+		g.indent--
+		g.writeIndent()
+		g.write("}")
+	case *ast.InterfaceStatement:
+		g.writeIndent()
+		g.write("type " + s.Name + " interface {\n")
+		g.indent++
+		for _, method := range s.Methods {
+			g.writeIndent()
+			g.write(method.Name + "(")
+			for i, param := range method.Parameters {
+				if i > 0 {
+					g.write(", ")
+				}
+				g.write(param.Name + " " + param.Type)
+			}
+			g.write(")")
+			if method.ReturnType != "" {
+				g.write(" " + method.ReturnType)
+			}
+			g.write("\n")
+		}
+		g.indent--
+		g.writeIndent()
+		g.write("}")
 	case *ast.BlockStatement:
 		g.generateBlockStatement(s)
 	default:

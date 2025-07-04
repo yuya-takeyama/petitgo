@@ -1,0 +1,18 @@
+package main
+
+func main() {
+    input := "abc"
+    i := 0
+    
+    for i < len(input) {
+        // Simple character processing
+        if i == 0 {
+            println("First char")
+        } else if i == 1 {
+            println("Second char")  
+        } else {
+            println("Other char")
+        }
+        i++
+    }
+}
