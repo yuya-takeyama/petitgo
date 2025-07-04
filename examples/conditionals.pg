@@ -1,0 +1,22 @@
+func main() {
+    x := 10
+    y := 5
+    
+    if x > y {
+        print(1)
+    }
+    
+    if x < y {
+        print(2)
+    } else {
+        print(3)
+    }
+    
+    if x == 10 {
+        print(4)
+    }
+    
+    if x != y {
+        print(5)
+    }
+}

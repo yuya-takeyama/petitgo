@@ -1,0 +1,22 @@
+func add(a int, b int) int {
+    return a + b
+}
+
+func multiply(x int, y int) int {
+    result := x * y
+    return result
+}
+
+func main() {
+    x := 5
+    y := 3
+    
+    sum := add(x, y)
+    product := multiply(x, y)
+    
+    print(sum)
+    print(product)
+    
+    result := add(multiply(2, 3), 4)
+    print(result)
+}

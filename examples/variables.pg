@@ -1,0 +1,12 @@
+func main() {
+    x := 42
+    y := 10
+    
+    var z int = 100
+    
+    sum := x + y
+    
+    print(sum)
+    print(y)
+    print(z)
+}
