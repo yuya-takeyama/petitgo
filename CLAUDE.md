@@ -1,5 +1,16 @@
 # petitgo Development Guide
 
+## プロジェクト概要
+
+petitgo は小さな Go 実装で、最終的にはセルフホスト（自分自身でコンパイルできる）を目指すプロジェクトです。
+
+## ドキュメント構成
+
+- **@docs/ROADMAP.md**: 全体の開発ロードマップ、9つの Phase の詳細計画
+- **@docs/MILESTONE-1.md**: Phase 1 の具体的な実装ステップとSuccess Criteria
+- **@docs/TESTING-STRATEGY.md**: テスト戦略、Go ライブラリテストから最終的なセルフテストまで
+- **@CLAUDE.md**: このファイル、開発ガイドと現在の進捗状況
+
 ## Test-Driven Development (TDD) - t-wada style
 
 このプロジェクトでは TDD を実践します。特に t-wada さんが提唱するスタイルで：
