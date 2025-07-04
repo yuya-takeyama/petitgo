@@ -148,65 +148,60 @@ petitgo は小さな Go 実装で、最終的にはセルフホスト（自分�
 - ✅ `5 > 3`, `10 == 10` → 比較演算子
 - ✅ REPL での動作確認完了
 
-### Package Refactoring ⚠️ 進行中！
+### Package Refactoring ✅ 完了！
 
 - [x] パッケージ分割の設計（Go 本家スタイル採用）
 - [x] token/ パッケージの作成（lexer/token.go から移動）
 - [x] scanner/ パッケージの作成（lexer/lexer.go から移動・リネーム）
 - [x] ast/ パッケージの作成（parser/ast.go から移動）
 - [x] 全てのコメントを英語化
-- [ ] parser/ パッケージの修正（進行中・エラー多数）
-- [ ] eval/ パッケージの修正（未着手）
-- [ ] repl/ パッケージの修正（未着手）
-- [ ] main.go の修正（未着手）
-- [ ] 全テストファイルの修正（未着手）
+- [x] parser/ パッケージの修正（完了）
+- [x] eval/ パッケージの修正（完了）
+- [x] repl/ パッケージの修正（完了）
+- [x] main.go の修正（完了）
+- [x] 全テストファイルの修正（完了）
+- [x] ファイル名の統一（scanner_*.go パターンに統一）
 
-**現在の構造（目標）:**
+**最終構造:**
 
 ```
 petitgo/
 ├── main.go              # CLI entry point
-├── token/              # Token definitions (完了)
+├── token/              # Token definitions
 │   └── token.go
-├── scanner/            # Lexical analysis (完了)
+├── scanner/            # Lexical analysis
 │   ├── scanner.go
-│   ├── lexer_test.go (要修正)
-│   └── lexer_identifiers_test.go (要修正)
-├── ast/                # AST node definitions (完了)
+│   ├── scanner_test.go
+│   └── scanner_identifiers_test.go
+├── ast/                # AST node definitions
 │   └── ast.go
-├── parser/             # Syntax analysis (要修正)
-│   ├── parser.go (エラー多数)
-│   └── parser_test.go (要修正)
-├── eval/               # Evaluation (要修正)
+├── parser/             # Syntax analysis
+│   ├── parser.go
+│   └── parser_test.go
+├── eval/               # Evaluation
 │   ├── environment.go
 │   └── eval.go
-└── repl/               # REPL (要修正)
+└── repl/               # REPL
     └── repl.go
 ```
 
-**リファクタリング進行状況:**
+**リファクタリング完了状況:**
 
 1. ✅ token パッケージ: Token と TokenInfo の定義完了
 2. ✅ scanner パッケージ: Scanner 構造体と NextToken()メソッド完了
 3. ✅ ast パッケージ: 全 AST ノード定義完了
-4. ⚠️ parser パッケージ: import 修正済みだが、型参照でエラー多数
-5. ❌ eval パッケージ: 未着手
-6. ❌ repl パッケージ: 未着手
-7. ❌ main.go: 未着手
-8. ❌ テストファイル群: package 宣言と import 修正が必要
+4. ✅ parser パッケージ: 全型参照を ast. プレフィックス付きに修正完了
+5. ✅ eval パッケージ: import と型参照修正完了
+6. ✅ repl パッケージ: import 修正完了
+7. ✅ main.go: 修正不要（既に正しい import）
+8. ✅ テストファイル群: package 宣言と import 修正完了
+9. ✅ ファイル名統一: scanner_*.go パターンに統一完了
 
-**次回再開時のタスク:**
+**達成事項:**
 
-1. parser/parser.go 内の型参照を ast.前置詞付きに修正
-2. scanner.Scanner, token.TokenInfo 等への変更
-3. eval パッケージの import 修正
-4. repl パッケージの import 修正
-5. main.go の import 修正
-6. 全テストファイルの修正
-7. ビルド・テスト・動作確認
-
-**注意事項:**
-
-- 一括置換は危険（Statement→ast.Statement で関数名まで変わってしまった）
-- 段階的に 1 つずつパッケージを修正すること
-- 各段階でビルド確認すること
+- Go 本家スタイルのパッケージ構造採用
+- 全 import の正しい修正
+- 全コメントの英語化
+- ビルド・テスト完全成功（`go build`, `go test ./...` 全て通過）
+- REPL 動作確認完了
+- ファイル命名規則の統一
