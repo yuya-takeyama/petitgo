@@ -75,3 +75,31 @@ petitgo は小さな Go 実装で、最終的にはセルフホスト（自分�
 - ✅ `8 / 2` → `4`
 - ✅ `2 + 3 * 4` → `14` (演算子優先順位)
 - ✅ `(2 + 3) * 4` → `20` (括弧による優先順位制御)
+
+### Phase 2: Variables and Basic Statements ✅ 完了！
+- [x] Lexer の拡張（完了）
+  - [x] 識別子（IDENT）トークンの実装
+  - [x] 代入演算子（ASSIGN: :=, =）の実装
+  - [x] 文字と数字の識別機能
+- [x] Parser の拡張（完了）
+  - [x] Statement インターフェースの定義
+  - [x] VarStatement（var x int = 42）の実装
+  - [x] AssignStatement（x := 42, x = 42）の実装
+  - [x] VariableNode（変数参照）の実装
+  - [x] ParseStatement メソッドの実装
+- [x] Environment の実装（完了）
+  - [x] 変数管理システム（Set/Get）
+  - [x] スコープ管理の基盤
+  - [x] EvalStatement 関数
+  - [x] EvalWithEnvironment 関数
+- [x] REPL の拡張（完了）
+  - [x] Statement と Expression の自動判定
+  - [x] 変数の永続化
+  - [x] 対話的な変数操作
+
+**Success Criteria 達成状況:**
+- ✅ `var x int = 42` → 変数宣言
+- ✅ `x := 10` → 短縮変数宣言
+- ✅ `x = 20` → 代入文
+- ✅ `x + y` → 変数参照と演算
+- ✅ 複数文の実行とスコープ管理
