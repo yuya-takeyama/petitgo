@@ -1,13 +1,17 @@
-package main
+package repl
 
 import (
 	"bufio"
 	"os"
+
+	"github.com/yuya-takeyama/petitgo/eval"
+	"github.com/yuya-takeyama/petitgo/lexer"
+	"github.com/yuya-takeyama/petitgo/parser"
 )
 
 func StartREPL() {
 	scanner := bufio.NewScanner(os.Stdin)
-	env := NewEnvironment()
+	env := eval.NewEnvironment()
 
 	print("petitgo calculator with variables and control flow\n")
 	print("Try: var x int = 42, x := 10, x = 20, expressions like x + 5\n")
@@ -38,19 +42,19 @@ func StartREPL() {
 	}
 }
 
-func evaluateInput(input string, env *Environment) int {
-	lexer := NewLexer(input)
-	parser := NewParser(lexer)
+func evaluateInput(input string, env *eval.Environment) int {
+	lexer := lexer.NewLexer(input)
+	parser := parser.NewParser(lexer)
 
 	// Statement か Expression かを判定
 	if isStatement(input) {
 		stmt := parser.ParseStatement()
-		EvalStatement(stmt, env)
+		eval.EvalStatement(stmt, env)
 		// Statement の場合は結果を返さない（0 を返す）
 		return 0
 	} else {
 		expr := parser.ParseExpression()
-		return EvalWithEnvironment(expr, env)
+		return eval.EvalWithEnvironment(expr, env)
 	}
 }
 
@@ -103,14 +107,33 @@ func isStatement(input string) bool {
 	return false
 }
 
-func evaluateExpression(input string) int {
-	lexer := NewLexer(input)
-	parser := NewParser(lexer)
-	ast := parser.ParseExpression()
-	return Eval(ast)
-}
-
 // fmt を使わずに文字列を出力
 func print(s string) {
 	os.Stdout.WriteString(s)
+}
+
+// 数値を文字列に変換して出力する（fmt なしで）
+func printInt(n int) {
+	if n == 0 {
+		os.Stdout.Write([]byte("0"))
+		return
+	}
+
+	if n < 0 {
+		os.Stdout.Write([]byte("-"))
+		n = -n
+	}
+
+	// 数字を逆順で取得
+	digits := []byte{}
+	for n > 0 {
+		digit := n % 10
+		digits = append(digits, byte('0'+digit))
+		n /= 10
+	}
+
+	// 逆順で出力
+	for i := len(digits) - 1; i >= 0; i-- {
+		os.Stdout.Write([]byte{digits[i]})
+	}
 }

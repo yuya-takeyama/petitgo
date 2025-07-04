@@ -1,6 +1,11 @@
-package main
+package eval
 
-import "os"
+import (
+	"os"
+
+	"github.com/yuya-takeyama/petitgo/lexer"
+	"github.com/yuya-takeyama/petitgo/parser"
+)
 
 // ControlFlowException for break and continue
 type ControlFlowException struct {
@@ -33,65 +38,65 @@ func printInt(n int) {
 	}
 }
 
-func Eval(node ASTNode) int {
+func Eval(node parser.ASTNode) int {
 	env := NewEnvironment()
 	return EvalWithEnvironment(node, env)
 }
 
-func EvalWithEnvironment(node ASTNode, env *Environment) int {
+func EvalWithEnvironment(node parser.ASTNode, env *Environment) int {
 	switch n := node.(type) {
-	case *NumberNode:
+	case *parser.NumberNode:
 		return n.Value
-	case *VariableNode:
+	case *parser.VariableNode:
 		if value, exists := env.Get(n.Name); exists {
 			return value
 		}
 		return 0 // 未定義変数は 0
-	case *BinaryOpNode:
+	case *parser.BinaryOpNode:
 		left := EvalWithEnvironment(n.Left, env)
 		right := EvalWithEnvironment(n.Right, env)
 
 		switch n.Operator {
-		case ADD:
+		case lexer.ADD:
 			return left + right
-		case SUB:
+		case lexer.SUB:
 			return left - right
-		case MUL:
+		case lexer.MUL:
 			return left * right
-		case QUO:
+		case lexer.QUO:
 			return left / right
-		case EQL:
+		case lexer.EQL:
 			if left == right {
 				return 1
 			}
 			return 0
-		case NEQ:
+		case lexer.NEQ:
 			if left != right {
 				return 1
 			}
 			return 0
-		case LSS:
+		case lexer.LSS:
 			if left < right {
 				return 1
 			}
 			return 0
-		case GTR:
+		case lexer.GTR:
 			if left > right {
 				return 1
 			}
 			return 0
-		case LEQ:
+		case lexer.LEQ:
 			if left <= right {
 				return 1
 			}
 			return 0
-		case GEQ:
+		case lexer.GEQ:
 			if left >= right {
 				return 1
 			}
 			return 0
 		}
-	case *CallNode:
+	case *parser.CallNode:
 		if n.Function == "print" && len(n.Arguments) > 0 {
 			value := EvalWithEnvironment(n.Arguments[0], env)
 			printInt(value)
@@ -103,24 +108,24 @@ func EvalWithEnvironment(node ASTNode, env *Environment) int {
 	return 0
 }
 
-func EvalStatement(stmt Statement, env *Environment) {
+func EvalStatement(stmt parser.Statement, env *Environment) {
 	switch s := stmt.(type) {
-	case *VarStatement:
+	case *parser.VarStatement:
 		value := EvalWithEnvironment(s.Value, env)
 		env.Set(s.Name, value)
-	case *AssignStatement:
+	case *parser.AssignStatement:
 		value := EvalWithEnvironment(s.Value, env)
 		env.Set(s.Name, value)
-	case *ExpressionStatement:
+	case *parser.ExpressionStatement:
 		EvalWithEnvironment(s.Expression, env)
-	case *IfStatement:
+	case *parser.IfStatement:
 		condition := EvalWithEnvironment(s.Condition, env)
 		if condition != 0 { // 0 は false、それ以外は true
 			EvalBlockStatement(s.ThenBlock, env)
 		} else if s.ElseBlock != nil {
 			EvalBlockStatement(s.ElseBlock, env)
 		}
-	case *ForStatement:
+	case *parser.ForStatement:
 		for {
 			// condition check
 			if s.Condition != nil {
@@ -135,16 +140,16 @@ func EvalStatement(stmt Statement, env *Environment) {
 
 			// update (not implemented for condition-only form)
 		}
-	case *BlockStatement:
+	case *parser.BlockStatement:
 		EvalBlockStatement(s, env)
-	case *BreakStatement:
+	case *parser.BreakStatement:
 		// TODO: implement proper break handling
-	case *ContinueStatement:
+	case *parser.ContinueStatement:
 		// TODO: implement proper continue handling
 	}
 }
 
-func EvalBlockStatement(block *BlockStatement, env *Environment) {
+func EvalBlockStatement(block *parser.BlockStatement, env *Environment) {
 	for _, stmt := range block.Statements {
 		EvalStatement(stmt, env)
 	}

@@ -1,138 +1,15 @@
-package main
+package parser
 
-// AST ノードのインターフェース
-type ASTNode interface {
-	String() string
-}
-
-// 数値ノード
-type NumberNode struct {
-	Value int
-}
-
-func (n *NumberNode) String() string {
-	return "NumberNode"
-}
-
-// 二項演算ノード
-type BinaryOpNode struct {
-	Left     ASTNode
-	Operator Token
-	Right    ASTNode
-}
-
-func (n *BinaryOpNode) String() string {
-	return "BinaryOpNode"
-}
-
-// 変数参照ノード
-type VariableNode struct {
-	Name string
-}
-
-func (n *VariableNode) String() string {
-	return "VariableNode"
-}
-
-// Statement インターフェース
-type Statement interface {
-	String() string
-}
-
-// 変数宣言文ノード (var x int = 42)
-type VarStatement struct {
-	Name     string
-	TypeName string
-	Value    ASTNode
-}
-
-func (n *VarStatement) String() string {
-	return "VarStatement"
-}
-
-// 代入文ノード (x := 42 or x = 42)
-type AssignStatement struct {
-	Name  string
-	Value ASTNode
-}
-
-func (n *AssignStatement) String() string {
-	return "AssignStatement"
-}
-
-// ブロック文ノード ({ ... })
-type BlockStatement struct {
-	Statements []Statement
-}
-
-func (n *BlockStatement) String() string {
-	return "BlockStatement"
-}
-
-// If文ノード (if condition { block } else { block })
-type IfStatement struct {
-	Condition ASTNode
-	ThenBlock *BlockStatement
-	ElseBlock *BlockStatement // nil if no else
-}
-
-func (n *IfStatement) String() string {
-	return "IfStatement"
-}
-
-// For文ノード (for init; condition; update { block })
-type ForStatement struct {
-	Init      Statement // nil for condition-only for loops
-	Condition ASTNode   // nil for infinite loops
-	Update    Statement // nil for condition-only for loops
-	Body      *BlockStatement
-}
-
-func (n *ForStatement) String() string {
-	return "ForStatement"
-}
-
-// Break文ノード
-type BreakStatement struct{}
-
-func (n *BreakStatement) String() string {
-	return "BreakStatement"
-}
-
-// Continue文ノード
-type ContinueStatement struct{}
-
-func (n *ContinueStatement) String() string {
-	return "ContinueStatement"
-}
-
-// 式文ノード (expression;)
-type ExpressionStatement struct {
-	Expression ASTNode
-}
-
-func (n *ExpressionStatement) String() string {
-	return "ExpressionStatement"
-}
-
-// 関数呼び出しノード (function(args...))
-type CallNode struct {
-	Function  string
-	Arguments []ASTNode
-}
-
-func (n *CallNode) String() string {
-	return "CallNode"
-}
+import "github.com/yuya-takeyama/petitgo/lexer"
 
 // パーサー構造体
 type Parser struct {
-	lexer        *Lexer
-	currentToken TokenInfo
+	lexer        *lexer.Lexer
+	currentToken lexer.TokenInfo
 }
 
-func NewParser(lexer *Lexer) *Parser {
-	p := &Parser{lexer: lexer}
+func NewParser(l *lexer.Lexer) *Parser {
+	p := &Parser{lexer: l}
 	p.nextToken()
 	return p
 }
@@ -143,26 +20,26 @@ func (p *Parser) nextToken() {
 
 func (p *Parser) ParseStatement() Statement {
 	switch p.currentToken.Type {
-	case IDENT:
+	case lexer.IDENT:
 		if p.currentToken.Literal == "var" {
 			return p.parseVarStatement()
 		}
 		// 次のトークンが ASSIGN なら代入文、そうでなければ式文
-		nextLexer := NewLexer(p.lexer.input[p.lexer.position:])
+		nextLexer := lexer.NewLexer(p.lexer.Input()[p.lexer.Position():])
 		nextToken := nextLexer.NextToken()
-		if nextToken.Type == ASSIGN {
+		if nextToken.Type == lexer.ASSIGN {
 			return p.parseAssignStatement()
 		}
 		return p.parseExpressionStatement()
-	case IF:
+	case lexer.IF:
 		return p.parseIfStatement()
-	case FOR:
+	case lexer.FOR:
 		return p.parseForStatement()
-	case BREAK:
+	case lexer.BREAK:
 		return p.parseBreakStatement()
-	case CONTINUE:
+	case lexer.CONTINUE:
 		return p.parseContinueStatement()
-	case LBRACE:
+	case lexer.LBRACE:
 		return p.parseBlockStatement()
 	default:
 		// 式文として処理
@@ -220,7 +97,7 @@ func (p *Parser) parseIfStatement() Statement {
 	condition := p.ParseExpression()
 
 	// {
-	if p.currentToken.Type != LBRACE {
+	if p.currentToken.Type != lexer.LBRACE {
 		// エラー: とりあえずダミーを返す
 		return &IfStatement{}
 	}
@@ -231,9 +108,9 @@ func (p *Parser) parseIfStatement() Statement {
 	var elseBlock *BlockStatement = nil
 
 	// else があるかチェック
-	if p.currentToken.Type == ELSE {
+	if p.currentToken.Type == lexer.ELSE {
 		p.nextToken()
-		if p.currentToken.Type == LBRACE {
+		if p.currentToken.Type == lexer.LBRACE {
 			elseBlock = p.parseBlockStatement()
 		}
 	}
@@ -257,7 +134,7 @@ func (p *Parser) parseForStatement() Statement {
 	condition := p.ParseExpression()
 
 	// {
-	if p.currentToken.Type != LBRACE {
+	if p.currentToken.Type != lexer.LBRACE {
 		// エラー: とりあえずダミーを返す
 		return &ForStatement{}
 	}
@@ -291,13 +168,13 @@ func (p *Parser) parseBlockStatement() *BlockStatement {
 
 	statements := []Statement{}
 
-	for p.currentToken.Type != RBRACE && p.currentToken.Type != EOF {
+	for p.currentToken.Type != lexer.RBRACE && p.currentToken.Type != lexer.EOF {
 		stmt := p.ParseStatement()
 		statements = append(statements, stmt)
 	}
 
 	// }
-	if p.currentToken.Type == RBRACE {
+	if p.currentToken.Type == lexer.RBRACE {
 		p.nextToken()
 	}
 
@@ -317,9 +194,9 @@ func (p *Parser) ParseExpression() ASTNode {
 func (p *Parser) parseComparison() ASTNode {
 	left := p.parseTerm()
 
-	for p.currentToken.Type == EQL || p.currentToken.Type == NEQ ||
-		p.currentToken.Type == LSS || p.currentToken.Type == GTR ||
-		p.currentToken.Type == LEQ || p.currentToken.Type == GEQ {
+	for p.currentToken.Type == lexer.EQL || p.currentToken.Type == lexer.NEQ ||
+		p.currentToken.Type == lexer.LSS || p.currentToken.Type == lexer.GTR ||
+		p.currentToken.Type == lexer.LEQ || p.currentToken.Type == lexer.GEQ {
 		operator := p.currentToken.Type
 		p.nextToken()
 		right := p.parseTerm()
@@ -336,7 +213,7 @@ func (p *Parser) parseComparison() ASTNode {
 func (p *Parser) parseTerm() ASTNode {
 	left := p.parseMultiplyDivide()
 
-	for p.currentToken.Type == ADD || p.currentToken.Type == SUB {
+	for p.currentToken.Type == lexer.ADD || p.currentToken.Type == lexer.SUB {
 		operator := p.currentToken.Type
 		p.nextToken()
 		right := p.parseMultiplyDivide()
@@ -353,7 +230,7 @@ func (p *Parser) parseTerm() ASTNode {
 func (p *Parser) parseMultiplyDivide() ASTNode {
 	left := p.parseFactor()
 
-	for p.currentToken.Type == MUL || p.currentToken.Type == QUO {
+	for p.currentToken.Type == lexer.MUL || p.currentToken.Type == lexer.QUO {
 		operator := p.currentToken.Type
 		p.nextToken()
 		right := p.parseFactor()
@@ -368,7 +245,7 @@ func (p *Parser) parseMultiplyDivide() ASTNode {
 }
 
 func (p *Parser) parseFactor() ASTNode {
-	if p.currentToken.Type == INT {
+	if p.currentToken.Type == lexer.INT {
 		value := 0
 		literal := p.currentToken.Literal
 
@@ -382,24 +259,24 @@ func (p *Parser) parseFactor() ASTNode {
 		return &NumberNode{Value: value}
 	}
 
-	if p.currentToken.Type == IDENT {
+	if p.currentToken.Type == lexer.IDENT {
 		name := p.currentToken.Literal
 		p.nextToken()
 
 		// 関数呼び出しかチェック
-		if p.currentToken.Type == LPAREN {
+		if p.currentToken.Type == lexer.LPAREN {
 			p.nextToken() // '(' を消費
 
 			arguments := []ASTNode{}
 
 			// 引数をパース
-			for p.currentToken.Type != RPAREN && p.currentToken.Type != EOF {
+			for p.currentToken.Type != lexer.RPAREN && p.currentToken.Type != lexer.EOF {
 				arg := p.ParseExpression()
 				arguments = append(arguments, arg)
 				// カンマは今回スキップ（簡単のため）
 			}
 
-			if p.currentToken.Type == RPAREN {
+			if p.currentToken.Type == lexer.RPAREN {
 				p.nextToken() // ')' を消費
 			}
 
@@ -409,10 +286,10 @@ func (p *Parser) parseFactor() ASTNode {
 		return &VariableNode{Name: name}
 	}
 
-	if p.currentToken.Type == LPAREN {
+	if p.currentToken.Type == lexer.LPAREN {
 		p.nextToken() // '(' を消費
 		expr := p.ParseExpression()
-		if p.currentToken.Type == RPAREN {
+		if p.currentToken.Type == lexer.RPAREN {
 			p.nextToken() // ')' を消費
 		}
 		return expr

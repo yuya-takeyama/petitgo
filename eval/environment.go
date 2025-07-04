@@ -1,4 +1,4 @@
-package main
+package eval
 
 // Environment は変数を管理する
 type Environment struct {
