@@ -1,0 +1,20 @@
+package main
+
+func fibonacci(n int) int {
+    if n <= 1 {
+        return n
+    }
+    return fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+func main() {
+    // Test fibonacci(7) = 13
+    result := fibonacci(7)
+    // 13 should output as '=' (ASCII 61)
+    println(result)
+    
+    // Test fibonacci(8) = 21  
+    result = fibonacci(8)
+    // 21 should output as 'E' (ASCII 69)
+    println(result)
+}
