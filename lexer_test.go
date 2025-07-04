@@ -11,8 +11,8 @@ func TestLexer_NextToken_SingleNumber(t *testing.T) {
 
 	token := lexer.NextToken()
 
-	if token.Type != NUMBER {
-		t.Fatalf("token type wrong. expected=%s, got=%s", NUMBER, token.Type)
+	if token.Type != INT {
+		t.Fatalf("token type wrong. expected=%d, got=%d", INT, token.Type)
 	}
 
 	if token.Literal != "123" {
@@ -34,8 +34,8 @@ func TestLexer_NextToken_DifferentNumbers(t *testing.T) {
 		lexer := NewLexer(tt.input)
 		token := lexer.NextToken()
 
-		if token.Type != NUMBER {
-			t.Fatalf("token type wrong. expected=%s, got=%s", NUMBER, token.Type)
+		if token.Type != INT {
+			t.Fatalf("token type wrong. expected=%d, got=%d", INT, token.Type)
 		}
 
 		if token.Literal != tt.expectedLiteral {
@@ -47,13 +47,13 @@ func TestLexer_NextToken_DifferentNumbers(t *testing.T) {
 func TestLexer_NextToken_Operators(t *testing.T) {
 	tests := []struct {
 		input           string
-		expectedType    TokenType
+		expectedType    Token
 		expectedLiteral string
 	}{
-		{"+", PLUS, "+"},
-		{"-", MINUS, "-"},
-		{"*", STAR, "*"},
-		{"/", SLASH, "/"},
+		{"+", ADD, "+"},
+		{"-", SUB, "-"},
+		{"*", MUL, "*"},
+		{"/", QUO, "/"},
 	}
 
 	for _, tt := range tests {
@@ -61,7 +61,7 @@ func TestLexer_NextToken_Operators(t *testing.T) {
 		token := lexer.NextToken()
 
 		if token.Type != tt.expectedType {
-			t.Fatalf("token type wrong. expected=%s, got=%s", tt.expectedType, token.Type)
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, token.Type)
 		}
 
 		if token.Literal != tt.expectedLiteral {
@@ -73,7 +73,7 @@ func TestLexer_NextToken_Operators(t *testing.T) {
 func TestLexer_NextToken_Parentheses(t *testing.T) {
 	tests := []struct {
 		input           string
-		expectedType    TokenType
+		expectedType    Token
 		expectedLiteral string
 	}{
 		{"(", LPAREN, "("},
@@ -85,7 +85,7 @@ func TestLexer_NextToken_Parentheses(t *testing.T) {
 		token := lexer.NextToken()
 
 		if token.Type != tt.expectedType {
-			t.Fatalf("token type wrong. expected=%s, got=%s", tt.expectedType, token.Type)
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, token.Type)
 		}
 
 		if token.Literal != tt.expectedLiteral {
@@ -98,12 +98,12 @@ func TestLexer_NextToken_WhitespaceSkipping(t *testing.T) {
 	input := "  123  +  456  "
 
 	expected := []struct {
-		expectedType    TokenType
+		expectedType    Token
 		expectedLiteral string
 	}{
-		{NUMBER, "123"},
-		{PLUS, "+"},
-		{NUMBER, "456"},
+		{INT, "123"},
+		{ADD, "+"},
+		{INT, "456"},
 		{EOF, ""},
 	}
 
@@ -113,7 +113,7 @@ func TestLexer_NextToken_WhitespaceSkipping(t *testing.T) {
 		token := lexer.NextToken()
 
 		if token.Type != tt.expectedType {
-			t.Fatalf("test[%d] - token type wrong. expected=%s, got=%s", i, tt.expectedType, token.Type)
+			t.Fatalf("test[%d] - token type wrong. expected=%d, got=%d", i, tt.expectedType, token.Type)
 		}
 
 		if token.Literal != tt.expectedLiteral {
@@ -126,20 +126,20 @@ func TestLexer_NextToken_ComplexExpression(t *testing.T) {
 	input := "1 + 2 * (3 - 4) / 5"
 
 	expected := []struct {
-		expectedType    TokenType
+		expectedType    Token
 		expectedLiteral string
 	}{
-		{NUMBER, "1"},
-		{PLUS, "+"},
-		{NUMBER, "2"},
-		{STAR, "*"},
+		{INT, "1"},
+		{ADD, "+"},
+		{INT, "2"},
+		{MUL, "*"},
 		{LPAREN, "("},
-		{NUMBER, "3"},
-		{MINUS, "-"},
-		{NUMBER, "4"},
+		{INT, "3"},
+		{SUB, "-"},
+		{INT, "4"},
 		{RPAREN, ")"},
-		{SLASH, "/"},
-		{NUMBER, "5"},
+		{QUO, "/"},
+		{INT, "5"},
 		{EOF, ""},
 	}
 
@@ -149,7 +149,7 @@ func TestLexer_NextToken_ComplexExpression(t *testing.T) {
 		token := lexer.NextToken()
 
 		if token.Type != tt.expectedType {
-			t.Fatalf("test[%d] - token type wrong. expected=%s, got=%s", i, tt.expectedType, token.Type)
+			t.Fatalf("test[%d] - token type wrong. expected=%d, got=%d", i, tt.expectedType, token.Type)
 		}
 
 		if token.Literal != tt.expectedLiteral {

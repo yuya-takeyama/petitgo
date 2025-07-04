@@ -1,3 +1,0 @@
-[submodule "go-src"]
-	path = go-src
-	url = https://github.com/golang/go.git

@@ -42,6 +42,9 @@ petitgo
 dist/
 build/
 
+# Go source submodule (reference only, not part of our module)
+go-src/
+
 # Test coverage
 coverage.txt
 coverage.html

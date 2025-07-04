@@ -1,20 +1,39 @@
 package main
 
-type TokenType string
+// Token is the set of lexical tokens of the Go programming language.
+type Token int
 
 const (
-	NUMBER TokenType = "NUMBER"
-	PLUS   TokenType = "PLUS"
-	MINUS  TokenType = "MINUS"
-	STAR   TokenType = "STAR"
-	SLASH  TokenType = "SLASH"
-	LPAREN TokenType = "LPAREN"
-	RPAREN TokenType = "RPAREN"
-	EOF    TokenType = "EOF"
+	// Special tokens
+	ILLEGAL Token = iota
+	EOF
+	COMMENT
+
+	literal_beg
+	// Identifiers and basic type literals
+	IDENT  // main
+	INT    // 12345
+	FLOAT  // 123.45
+	IMAG   // 123.45i
+	CHAR   // 'a'
+	STRING // "abc"
+	literal_end
+
+	operator_beg
+	// Operators and delimiters
+	ADD // +
+	SUB // -
+	MUL // *
+	QUO // /
+	REM // %
+
+	LPAREN // (
+	RPAREN // )
+	operator_end
 )
 
-type Token struct {
-	Type    TokenType
+type TokenInfo struct {
+	Type    Token
 	Literal string
 }
 
@@ -27,13 +46,13 @@ func NewLexer(input string) *Lexer {
 	return &Lexer{input: input, position: 0}
 }
 
-func (l *Lexer) NextToken() Token {
+func (l *Lexer) NextToken() TokenInfo {
 	// 空白文字をスキップ
 	l.skipWhitespace()
 
 	// 入力の終端チェック
 	if l.position >= len(l.input) {
-		return Token{Type: EOF, Literal: ""}
+		return TokenInfo{Type: EOF, Literal: ""}
 	}
 
 	ch := l.input[l.position]
@@ -42,22 +61,22 @@ func (l *Lexer) NextToken() Token {
 	switch ch {
 	case '+':
 		l.position++
-		return Token{Type: PLUS, Literal: "+"}
+		return TokenInfo{Type: ADD, Literal: "+"}
 	case '-':
 		l.position++
-		return Token{Type: MINUS, Literal: "-"}
+		return TokenInfo{Type: SUB, Literal: "-"}
 	case '*':
 		l.position++
-		return Token{Type: STAR, Literal: "*"}
+		return TokenInfo{Type: MUL, Literal: "*"}
 	case '/':
 		l.position++
-		return Token{Type: SLASH, Literal: "/"}
+		return TokenInfo{Type: QUO, Literal: "/"}
 	case '(':
 		l.position++
-		return Token{Type: LPAREN, Literal: "("}
+		return TokenInfo{Type: LPAREN, Literal: "("}
 	case ')':
 		l.position++
-		return Token{Type: RPAREN, Literal: ")"}
+		return TokenInfo{Type: RPAREN, Literal: ")"}
 	}
 
 	// 数字を読み取る
@@ -68,15 +87,15 @@ func (l *Lexer) NextToken() Token {
 		}
 
 		literal := l.input[start:l.position]
-		return Token{
-			Type:    NUMBER,
+		return TokenInfo{
+			Type:    INT,
 			Literal: literal,
 		}
 	}
 
 	// 未知の文字
 	l.position++
-	return Token{Type: EOF, Literal: ""}
+	return TokenInfo{Type: EOF, Literal: ""}
 }
 
 func isDigit(ch byte) bool {
