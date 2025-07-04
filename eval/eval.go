@@ -48,6 +48,34 @@ func Eval(node ast.ASTNode) int {
 	return EvalWithEnvironment(node, env)
 }
 
+// EvalValue evaluates an expression and returns a proper Value
+func EvalValue(node ast.ASTNode) Value {
+	env := NewEnvironment()
+	return EvalValueWithEnvironment(node, env)
+}
+
+// EvalValueWithEnvironment evaluates an expression with proper type system
+func EvalValueWithEnvironment(node ast.ASTNode, env *Environment) Value {
+	switch n := node.(type) {
+	case *ast.NumberNode:
+		return &IntValue{Value: n.Value}
+	case *ast.BooleanNode:
+		return &BoolValue{Value: n.Value}
+	case *ast.StringNode:
+		return &StringValue{Value: n.Value}
+	case *ast.VariableNode:
+		// For now, convert from int storage to proper Value
+		if value, exists := env.Get(n.Name); exists {
+			return &IntValue{Value: value}
+		}
+		return &IntValue{Value: 0}
+	}
+
+	// Default case: convert old evaluation to IntValue
+	oldResult := EvalWithEnvironment(node, env)
+	return &IntValue{Value: oldResult}
+}
+
 func EvalWithEnvironment(node ast.ASTNode, env *Environment) int {
 	switch n := node.(type) {
 	case *ast.NumberNode:

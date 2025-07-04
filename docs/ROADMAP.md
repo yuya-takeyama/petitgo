@@ -7,7 +7,7 @@ petitgo は小さな Go 実装で、最終的にはセルフホスト（自分�
 
 ## Development Phases
 
-### Phase 1: Minimal Calculator (現在ここ - Lexer 完了)
+### Phase 1: Minimal Calculator ✅ **完了**
 - **目標**: 四則演算ができる最小限のインタープリタ
 - **実装内容**:
   - [x] プロジェクトのセットアップ
@@ -21,43 +21,44 @@ petitgo は小さな Go 実装で、最終的にはセルフホスト（自分�
     - [x] 括弧（LPAREN, RPAREN）のトークン化
     - [x] 空白文字のスキップ処理
     - [x] 包括的なテストスイート
-  - [ ] パーサー - 四則演算の式をパース
-    - [ ] AST ノードの定義
-    - [ ] 再帰下降パーサーの実装
-    - [ ] 演算子優先順位の処理
-  - [ ] 評価器（Evaluator）- 式を評価して結果を返す
-  - [ ] print 関数 - 結果を出力（fmt パッケージなしで実装）
-  - [ ] REPL - 対話的に式を評価
+  - [x] パーサー - 四則演算の式をパース
+    - [x] AST ノードの定義
+    - [x] 再帰下降パーサーの実装
+    - [x] 演算子優先順位の処理
+  - [x] 評価器（Evaluator）- 式を評価して結果を返す
+  - [x] print 関数 - 結果を出力（fmt パッケージなしで実装）
+  - [x] REPL - 対話的に式を評価
 
 **サポートする演算**: `+`, `-`, `*`, `/`, `()` （括弧による優先順位）
 
-### Phase 2: Variables and Basic Statements
+### Phase 2: Variables and Basic Statements ✅ **完了**
 - **目標**: 変数の代入と参照、基本的な文の実装
 - **実装内容**:
-  - [ ] 変数宣言（`var`）
-  - [ ] 代入文（`:=`）
-  - [ ] スコープの実装
-  - [ ] 複数文の実行
+  - [x] 変数宣言（`var`）
+  - [x] 代入文（`:=`）
+  - [x] スコープの実装
+  - [x] 複数文の実行
 
-### Phase 3: Control Flow
+### Phase 3: Control Flow ✅ **完了**
 - **目標**: 制御構文の実装
 - **実装内容**:
-  - [ ] if/else 文
-  - [ ] for ループ
-  - [ ] break/continue
+  - [x] if/else 文
+  - [x] for ループ
+  - [x] break/continue
 
-### Phase 4: Functions
+### Phase 4: Functions ✅ **完了**
 - **目標**: 関数の定義と呼び出し
 - **実装内容**:
-  - [ ] 関数定義（`func`）
-  - [ ] 関数呼び出し
-  - [ ] 引数と戻り値
-  - [ ] クロージャ
+  - [x] 関数定義（`func`）
+  - [x] 関数呼び出し
+  - [x] 引数と戻り値
+  - [ ] クロージャ（未実装）
 
-### Phase 5: Type System
+### Phase 5: Type System 🚧 **進行中（現在ここ）**
 - **目標**: Go の型システムの基本実装
 - **実装内容**:
-  - [ ] 基本型（int, string, bool）
+  - [x] 基本型（int, string, bool）
+  - [x] Value システム（型情報付き評価）
   - [ ] 型チェック
   - [ ] 型推論
   - [ ] 構造体（struct）
