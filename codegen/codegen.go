@@ -82,11 +82,14 @@ func (g *Generator) generateNode(node ast.ASTNode) {
 	case *ast.VariableNode:
 		g.write(n.Name)
 	case *ast.BinaryOpNode:
+		// Always wrap binary operations in parentheses to preserve exact precedence
+		g.write("(")
 		g.generateNode(n.Left)
 		g.write(" ")
 		g.generateOperator(n.Operator)
 		g.write(" ")
 		g.generateNode(n.Right)
+		g.write(")")
 	case *ast.CallNode:
 		if n.Function == "print" {
 			g.write("println(")
