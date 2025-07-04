@@ -8,79 +8,79 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.21'
-        
-    - name: Cache Go modules
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-          
-    - name: Download dependencies
-      run: go mod download
-      
-    - name: Run tests
-      run: go test -v ./...
-      
-    - name: Run tests with race detection
-      run: go test -race -v ./...
-      
-    - name: Build binary
-      run: go build -o petitgo
-      
-    - name: Test help command
-      run: ./petitgo help
-      
-    - name: Test REPL functionality
-      run: |
-        echo "2 + 3" | timeout 5s ./petitgo || true
-        
-    - name: Test example compilation
-      run: |
-        if [ -f examples/fibonacci.pg ]; then
-          ./petitgo ast examples/fibonacci.pg > /dev/null
-          echo "AST generation test passed"
-        fi
-        
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Run tests with race detection
+        run: go test -race -v ./...
+
+      - name: Build binary
+        run: go build -o petitgo
+
+      - name: Test help command
+        run: ./petitgo help
+
+      - name: Test REPL functionality
+        run: |
+          echo "2 + 3" | timeout 5s ./petitgo || true
+
+      - name: Test example compilation
+        run: |
+          if [ -f examples/fibonacci.pg ]; then
+            ./petitgo ast examples/fibonacci.pg > /dev/null
+            echo "AST generation test passed"
+          fi
+
   test-macos:
     runs-on: macos-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.21'
-        
-    - name: Download dependencies
-      run: go mod download
-      
-    - name: Run tests
-      run: go test -v ./...
-      
-    - name: Build binary
-      run: go build -o petitgo
-      
-    - name: Test native compilation (ARM64)
-      run: |
-        if [ -f examples/fibonacci.pg ]; then
-          ./petitgo asm examples/fibonacci.pg > /dev/null
-          echo "ARM64 assembly generation test passed"
-        fi
-        
-    - name: Test help command on macOS
-      run: ./petitgo help
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Build binary
+        run: go build -o petitgo
+
+      - name: Test native compilation (ARM64)
+        run: |
+          if [ -f examples/fibonacci.pg ]; then
+            ./petitgo asm examples/fibonacci.pg > /dev/null
+            echo "ARM64 assembly generation test passed"
+          fi
+
+      - name: Test help command on macOS
+        run: ./petitgo help
