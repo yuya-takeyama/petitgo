@@ -10,9 +10,10 @@ import (
 )
 
 func TestCalculatorExample(t *testing.T) {
-	// Skip native compilation tests on non-ARM64 platforms
-	if runtime.GOOS != "darwin" || runtime.GOARCH != "arm64" {
-		t.Skip("Native compilation only supported on macOS ARM64")
+	// Skip on unsupported platforms
+	if !(runtime.GOOS == "darwin" && runtime.GOARCH == "arm64") &&
+		!(runtime.GOOS == "linux" && runtime.GOARCH == "amd64") {
+		t.Skip("Native compilation only supported on macOS ARM64 and Linux x86_64")
 	}
 
 	// Create a temporary file with calculator code
@@ -71,9 +72,10 @@ func TestCalculatorExample(t *testing.T) {
 }
 
 func TestParenthesesPrecedence(t *testing.T) {
-	// Skip native compilation tests on non-ARM64 platforms
-	if runtime.GOOS != "darwin" || runtime.GOARCH != "arm64" {
-		t.Skip("Native compilation only supported on macOS ARM64")
+	// Skip on unsupported platforms
+	if !(runtime.GOOS == "darwin" && runtime.GOARCH == "arm64") &&
+		!(runtime.GOOS == "linux" && runtime.GOARCH == "amd64") {
+		t.Skip("Native compilation only supported on macOS ARM64 and Linux x86_64")
 	}
 
 	tests := []struct {
