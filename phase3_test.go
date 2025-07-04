@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/yuya-takeyama/petitgo/eval"
-	"github.com/yuya-takeyama/petitgo/lexer"
 	"github.com/yuya-takeyama/petitgo/parser"
+	"github.com/yuya-takeyama/petitgo/scanner"
 )
 
 func TestPhase3_SimpleComparison(t *testing.T) {
@@ -22,8 +22,8 @@ func TestPhase3_SimpleComparison(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		lexer := lexer.NewLexer(tt.input)
-		parser := parser.NewParser(lexer)
+		sc := scanner.NewScanner(tt.input)
+		parser := parser.NewParser(sc)
 		ast := parser.ParseExpression()
 		result := eval.Eval(ast)
 
@@ -37,8 +37,8 @@ func TestPhase3_IfStatement(t *testing.T) {
 	// 簡単な if 文のテスト
 	input := "if 1 > 0 { x := 42 }"
 
-	lexer := lexer.NewLexer(input)
-	parser := parser.NewParser(lexer)
+	sc := scanner.NewScanner(input)
+	parser := parser.NewParser(sc)
 	stmt := parser.ParseStatement()
 
 	env := eval.NewEnvironment()
@@ -58,8 +58,8 @@ func TestPhase3_IfElseStatement(t *testing.T) {
 	// if-else 文のテスト
 	input := "if 0 > 1 { x := 42 } else { x := 24 }"
 
-	lexer := lexer.NewLexer(input)
-	parser := parser.NewParser(lexer)
+	sc := scanner.NewScanner(input)
+	parser := parser.NewParser(sc)
 	stmt := parser.ParseStatement()
 
 	env := eval.NewEnvironment()
@@ -81,8 +81,8 @@ func TestPhase3_SimpleVariableComparison(t *testing.T) {
 	env.Set("x", 10)
 	env.Set("y", 5)
 
-	lexer := lexer.NewLexer("x > y")
-	parser := parser.NewParser(lexer)
+	sc := scanner.NewScanner("x > y")
+	parser := parser.NewParser(sc)
 	ast := parser.ParseExpression()
 	result := eval.EvalWithEnvironment(ast, env)
 

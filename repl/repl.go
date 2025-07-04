@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/yuya-takeyama/petitgo/eval"
-	"github.com/yuya-takeyama/petitgo/lexer"
 	"github.com/yuya-takeyama/petitgo/parser"
+	"github.com/yuya-takeyama/petitgo/scanner"
 )
 
 func StartREPL() {
@@ -43,8 +43,8 @@ func StartREPL() {
 }
 
 func evaluateInput(input string, env *eval.Environment) int {
-	lexer := lexer.NewLexer(input)
-	parser := parser.NewParser(lexer)
+	sc := scanner.NewScanner(input)
+	parser := parser.NewParser(sc)
 
 	// Statement か Expression かを判定
 	if isStatement(input) {

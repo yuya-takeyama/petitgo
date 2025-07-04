@@ -1,25 +1,29 @@
 package scanner
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/yuya-takeyama/petitgo/token"
+)
 
 func TestLexerIdentifiers(t *testing.T) {
 	input := "var x foo bar123"
 
 	tests := []struct {
-		expectedType    Token
+		expectedType    token.Token
 		expectedLiteral string
 	}{
-		{IDENT, "var"},
-		{IDENT, "x"},
-		{IDENT, "foo"},
-		{IDENT, "bar123"},
-		{EOF, ""},
+		{token.IDENT, "var"},
+		{token.IDENT, "x"},
+		{token.IDENT, "foo"},
+		{token.IDENT, "bar123"},
+		{token.EOF, ""},
 	}
 
-	lexer := NewLexer(input)
+	scanner := NewScanner(input)
 
 	for i, tt := range tests {
-		tok := lexer.NextToken()
+		tok := scanner.NextToken()
 
 		if tok.Type != tt.expectedType {
 			t.Fatalf("tests[%d] - tokentype wrong. expected=%q, got=%q",
@@ -37,18 +41,18 @@ func TestLexerAssignmentOperators(t *testing.T) {
 	input := ":= ="
 
 	tests := []struct {
-		expectedType    Token
+		expectedType    token.Token
 		expectedLiteral string
 	}{
-		{ASSIGN, ":="},
-		{ASSIGN, "="},
-		{EOF, ""},
+		{token.ASSIGN, ":="},
+		{token.ASSIGN, "="},
+		{token.EOF, ""},
 	}
 
-	lexer := NewLexer(input)
+	scanner := NewScanner(input)
 
 	for i, tt := range tests {
-		tok := lexer.NextToken()
+		tok := scanner.NextToken()
 
 		if tok.Type != tt.expectedType {
 			t.Fatalf("tests[%d] - tokentype wrong. expected=%q, got=%q",

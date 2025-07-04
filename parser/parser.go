@@ -6,44 +6,44 @@ import (
 	"github.com/yuya-takeyama/petitgo/token"
 )
 
-// パーサー構造体
+// Parser struct for parsing tokens into AST
 type Parser struct {
-	lexer        *lexer.Lexer
-	currentToken lexer.TokenInfo
+	scanner      *scanner.Scanner
+	currentToken token.TokenInfo
 }
 
-func NewParser(l *lexer.Lexer) *Parser {
-	p := &Parser{lexer: l}
+func NewParser(s *scanner.Scanner) *Parser {
+	p := &Parser{scanner: s}
 	p.nextToken()
 	return p
 }
 
 func (p *Parser) nextToken() {
-	p.currentToken = p.lexer.NextToken()
+	p.currentToken = p.scanner.NextToken()
 }
 
-func (p *Parser) ParseStatement() Statement {
+func (p *Parser) ParseStatement() ast.Statement {
 	switch p.currentToken.Type {
-	case lexer.IDENT:
+	case token.IDENT:
 		if p.currentToken.Literal == "var" {
 			return p.parseVarStatement()
 		}
 		// 次のトークンが ASSIGN なら代入文、そうでなければ式文
-		nextLexer := lexer.NewLexer(p.lexer.Input()[p.lexer.Position():])
-		nextToken := nextLexer.NextToken()
-		if nextToken.Type == lexer.ASSIGN {
+		nextScanner := scanner.NewScanner(p.scanner.Input()[p.scanner.Position():])
+		nextToken := nextScanner.NextToken()
+		if nextToken.Type == token.ASSIGN {
 			return p.parseAssignStatement()
 		}
 		return p.parseExpressionStatement()
-	case lexer.IF:
+	case token.IF:
 		return p.parseIfStatement()
-	case lexer.FOR:
+	case token.FOR:
 		return p.parseForStatement()
-	case lexer.BREAK:
+	case token.BREAK:
 		return p.parseBreakStatement()
-	case lexer.CONTINUE:
+	case token.CONTINUE:
 		return p.parseContinueStatement()
-	case lexer.LBRACE:
+	case token.LBRACE:
 		return p.parseBlockStatement()
 	default:
 		// 式文として処理
@@ -51,7 +51,7 @@ func (p *Parser) ParseStatement() Statement {
 	}
 }
 
-func (p *Parser) parseVarStatement() Statement {
+func (p *Parser) parseVarStatement() ast.Statement {
 	// var
 	p.nextToken()
 
@@ -69,14 +69,14 @@ func (p *Parser) parseVarStatement() Statement {
 	// 式
 	value := p.ParseExpression()
 
-	return &VarStatement{
+	return &ast.VarStatement{
 		Name:     name,
 		TypeName: typeName,
 		Value:    value,
 	}
 }
 
-func (p *Parser) parseAssignStatement() Statement {
+func (p *Parser) parseAssignStatement() ast.Statement {
 	// 変数名
 	name := p.currentToken.Literal
 	p.nextToken()
@@ -87,13 +87,13 @@ func (p *Parser) parseAssignStatement() Statement {
 	// 式
 	value := p.ParseExpression()
 
-	return &AssignStatement{
+	return &ast.AssignStatement{
 		Name:  name,
 		Value: value,
 	}
 }
 
-func (p *Parser) parseIfStatement() Statement {
+func (p *Parser) parseIfStatement() ast.Statement {
 	// if
 	p.nextToken()
 
@@ -101,32 +101,32 @@ func (p *Parser) parseIfStatement() Statement {
 	condition := p.ParseExpression()
 
 	// {
-	if p.currentToken.Type != lexer.LBRACE {
+	if p.currentToken.Type != token.LBRACE {
 		// エラー: とりあえずダミーを返す
-		return &IfStatement{}
+		return &ast.IfStatement{}
 	}
 
 	// then block
 	thenBlock := p.parseBlockStatement()
 
-	var elseBlock *BlockStatement = nil
+	var elseBlock *ast.BlockStatement = nil
 
 	// else があるかチェック
-	if p.currentToken.Type == lexer.ELSE {
+	if p.currentToken.Type == token.ELSE {
 		p.nextToken()
-		if p.currentToken.Type == lexer.LBRACE {
+		if p.currentToken.Type == token.LBRACE {
 			elseBlock = p.parseBlockStatement()
 		}
 	}
 
-	return &IfStatement{
+	return &ast.IfStatement{
 		Condition: condition,
 		ThenBlock: thenBlock,
 		ElseBlock: elseBlock,
 	}
 }
 
-func (p *Parser) parseForStatement() Statement {
+func (p *Parser) parseForStatement() ast.Statement {
 	// for
 	p.nextToken()
 
@@ -138,15 +138,15 @@ func (p *Parser) parseForStatement() Statement {
 	condition := p.ParseExpression()
 
 	// {
-	if p.currentToken.Type != lexer.LBRACE {
+	if p.currentToken.Type != token.LBRACE {
 		// エラー: とりあえずダミーを返す
-		return &ForStatement{}
+		return &ast.ForStatement{}
 	}
 
 	// body
 	body := p.parseBlockStatement()
 
-	return &ForStatement{
+	return &ast.ForStatement{
 		Init:      nil,
 		Condition: condition,
 		Update:    nil,
@@ -154,57 +154,57 @@ func (p *Parser) parseForStatement() Statement {
 	}
 }
 
-func (p *Parser) parseBreakStatement() Statement {
+func (p *Parser) parseBreakStatement() ast.Statement {
 	// break
 	p.nextToken()
-	return &BreakStatement{}
+	return &ast.BreakStatement{}
 }
 
-func (p *Parser) parseContinueStatement() Statement {
+func (p *Parser) parseContinueStatement() ast.Statement {
 	// continue
 	p.nextToken()
-	return &ContinueStatement{}
+	return &ast.ContinueStatement{}
 }
 
-func (p *Parser) parseBlockStatement() *BlockStatement {
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	// {
 	p.nextToken()
 
-	statements := []Statement{}
+	statements := []ast.Statement{}
 
-	for p.currentToken.Type != lexer.RBRACE && p.currentToken.Type != lexer.EOF {
+	for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
 		stmt := p.ParseStatement()
 		statements = append(statements, stmt)
 	}
 
 	// }
-	if p.currentToken.Type == lexer.RBRACE {
+	if p.currentToken.Type == token.RBRACE {
 		p.nextToken()
 	}
 
-	return &BlockStatement{Statements: statements}
+	return &ast.BlockStatement{Statements: statements}
 }
 
-func (p *Parser) parseExpressionStatement() Statement {
+func (p *Parser) parseExpressionStatement() ast.Statement {
 	expression := p.ParseExpression()
-	return &ExpressionStatement{Expression: expression}
+	return &ast.ExpressionStatement{Expression: expression}
 }
 
-func (p *Parser) ParseExpression() ASTNode {
+func (p *Parser) ParseExpression() ast.ASTNode {
 	return p.parseComparison()
 }
 
 // 比較演算子の解析 (==, !=, <, >, <=, >=)
-func (p *Parser) parseComparison() ASTNode {
+func (p *Parser) parseComparison() ast.ASTNode {
 	left := p.parseTerm()
 
-	for p.currentToken.Type == lexer.EQL || p.currentToken.Type == lexer.NEQ ||
-		p.currentToken.Type == lexer.LSS || p.currentToken.Type == lexer.GTR ||
-		p.currentToken.Type == lexer.LEQ || p.currentToken.Type == lexer.GEQ {
+	for p.currentToken.Type == token.EQL || p.currentToken.Type == token.NEQ ||
+		p.currentToken.Type == token.LSS || p.currentToken.Type == token.GTR ||
+		p.currentToken.Type == token.LEQ || p.currentToken.Type == token.GEQ {
 		operator := p.currentToken.Type
 		p.nextToken()
 		right := p.parseTerm()
-		left = &BinaryOpNode{
+		left = &ast.BinaryOpNode{
 			Left:     left,
 			Operator: operator,
 			Right:    right,
@@ -214,14 +214,14 @@ func (p *Parser) parseComparison() ASTNode {
 	return left
 }
 
-func (p *Parser) parseTerm() ASTNode {
+func (p *Parser) parseTerm() ast.ASTNode {
 	left := p.parseMultiplyDivide()
 
-	for p.currentToken.Type == lexer.ADD || p.currentToken.Type == lexer.SUB {
+	for p.currentToken.Type == token.ADD || p.currentToken.Type == token.SUB {
 		operator := p.currentToken.Type
 		p.nextToken()
 		right := p.parseMultiplyDivide()
-		left = &BinaryOpNode{
+		left = &ast.BinaryOpNode{
 			Left:     left,
 			Operator: operator,
 			Right:    right,
@@ -231,14 +231,14 @@ func (p *Parser) parseTerm() ASTNode {
 	return left
 }
 
-func (p *Parser) parseMultiplyDivide() ASTNode {
+func (p *Parser) parseMultiplyDivide() ast.ASTNode {
 	left := p.parseFactor()
 
-	for p.currentToken.Type == lexer.MUL || p.currentToken.Type == lexer.QUO {
+	for p.currentToken.Type == token.MUL || p.currentToken.Type == token.QUO {
 		operator := p.currentToken.Type
 		p.nextToken()
 		right := p.parseFactor()
-		left = &BinaryOpNode{
+		left = &ast.BinaryOpNode{
 			Left:     left,
 			Operator: operator,
 			Right:    right,
@@ -248,8 +248,8 @@ func (p *Parser) parseMultiplyDivide() ASTNode {
 	return left
 }
 
-func (p *Parser) parseFactor() ASTNode {
-	if p.currentToken.Type == lexer.INT {
+func (p *Parser) parseFactor() ast.ASTNode {
+	if p.currentToken.Type == token.INT {
 		value := 0
 		literal := p.currentToken.Literal
 
@@ -260,45 +260,45 @@ func (p *Parser) parseFactor() ASTNode {
 		}
 
 		p.nextToken()
-		return &NumberNode{Value: value}
+		return &ast.NumberNode{Value: value}
 	}
 
-	if p.currentToken.Type == lexer.IDENT {
+	if p.currentToken.Type == token.IDENT {
 		name := p.currentToken.Literal
 		p.nextToken()
 
 		// 関数呼び出しかチェック
-		if p.currentToken.Type == lexer.LPAREN {
+		if p.currentToken.Type == token.LPAREN {
 			p.nextToken() // '(' を消費
 
-			arguments := []ASTNode{}
+			arguments := []ast.ASTNode{}
 
 			// 引数をパース
-			for p.currentToken.Type != lexer.RPAREN && p.currentToken.Type != lexer.EOF {
+			for p.currentToken.Type != token.RPAREN && p.currentToken.Type != token.EOF {
 				arg := p.ParseExpression()
 				arguments = append(arguments, arg)
 				// カンマは今回スキップ（簡単のため）
 			}
 
-			if p.currentToken.Type == lexer.RPAREN {
+			if p.currentToken.Type == token.RPAREN {
 				p.nextToken() // ')' を消費
 			}
 
-			return &CallNode{Function: name, Arguments: arguments}
+			return &ast.CallNode{Function: name, Arguments: arguments}
 		}
 
-		return &VariableNode{Name: name}
+		return &ast.VariableNode{Name: name}
 	}
 
-	if p.currentToken.Type == lexer.LPAREN {
+	if p.currentToken.Type == token.LPAREN {
 		p.nextToken() // '(' を消費
 		expr := p.ParseExpression()
-		if p.currentToken.Type == lexer.RPAREN {
+		if p.currentToken.Type == token.RPAREN {
 			p.nextToken() // ')' を消費
 		}
 		return expr
 	}
 
 	// エラーケース: とりあえず 0 を返す
-	return &NumberNode{Value: 0}
+	return &ast.NumberNode{Value: 0}
 }

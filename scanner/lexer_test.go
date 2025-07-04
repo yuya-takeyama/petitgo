@@ -2,21 +2,23 @@ package scanner
 
 import (
 	"testing"
+
+	"github.com/yuya-takeyama/petitgo/token"
 )
 
 func TestLexer_NextToken_SingleNumber(t *testing.T) {
 	input := "123"
 
-	lexer := NewLexer(input)
+	scanner := NewScanner(input)
 
-	token := lexer.NextToken()
+	tok := scanner.NextToken()
 
-	if token.Type != INT {
-		t.Fatalf("token type wrong. expected=%d, got=%d", INT, token.Type)
+	if tok.Type != token.INT {
+		t.Fatalf("token type wrong. expected=%d, got=%d", token.INT, tok.Type)
 	}
 
-	if token.Literal != "123" {
-		t.Fatalf("token literal wrong. expected=%s, got=%s", "123", token.Literal)
+	if tok.Literal != "123" {
+		t.Fatalf("token literal wrong. expected=%s, got=%s", "123", tok.Literal)
 	}
 }
 
@@ -31,15 +33,15 @@ func TestLexer_NextToken_DifferentNumbers(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		lexer := NewLexer(tt.input)
-		token := lexer.NextToken()
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
 
-		if token.Type != INT {
-			t.Fatalf("token type wrong. expected=%d, got=%d", INT, token.Type)
+		if tok.Type != token.INT {
+			t.Fatalf("token type wrong. expected=%d, got=%d", token.INT, tok.Type)
 		}
 
-		if token.Literal != tt.expectedLiteral {
-			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, token.Literal)
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
 		}
 	}
 }
@@ -47,25 +49,25 @@ func TestLexer_NextToken_DifferentNumbers(t *testing.T) {
 func TestLexer_NextToken_Operators(t *testing.T) {
 	tests := []struct {
 		input           string
-		expectedType    Token
+		expectedType    token.Token
 		expectedLiteral string
 	}{
-		{"+", ADD, "+"},
-		{"-", SUB, "-"},
-		{"*", MUL, "*"},
-		{"/", QUO, "/"},
+		{"+", token.ADD, "+"},
+		{"-", token.SUB, "-"},
+		{"*", token.MUL, "*"},
+		{"/", token.QUO, "/"},
 	}
 
 	for _, tt := range tests {
-		lexer := NewLexer(tt.input)
-		token := lexer.NextToken()
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
 
-		if token.Type != tt.expectedType {
-			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, token.Type)
+		if tok.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, tok.Type)
 		}
 
-		if token.Literal != tt.expectedLiteral {
-			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, token.Literal)
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
 		}
 	}
 }
@@ -73,23 +75,23 @@ func TestLexer_NextToken_Operators(t *testing.T) {
 func TestLexer_NextToken_Parentheses(t *testing.T) {
 	tests := []struct {
 		input           string
-		expectedType    Token
+		expectedType    token.Token
 		expectedLiteral string
 	}{
-		{"(", LPAREN, "("},
-		{")", RPAREN, ")"},
+		{"(", token.LPAREN, "("},
+		{")", token.RPAREN, ")"},
 	}
 
 	for _, tt := range tests {
-		lexer := NewLexer(tt.input)
-		token := lexer.NextToken()
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
 
-		if token.Type != tt.expectedType {
-			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, token.Type)
+		if tok.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, tok.Type)
 		}
 
-		if token.Literal != tt.expectedLiteral {
-			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, token.Literal)
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
 		}
 	}
 }
@@ -98,26 +100,26 @@ func TestLexer_NextToken_WhitespaceSkipping(t *testing.T) {
 	input := "  123  +  456  "
 
 	expected := []struct {
-		expectedType    Token
+		expectedType    token.Token
 		expectedLiteral string
 	}{
-		{INT, "123"},
-		{ADD, "+"},
-		{INT, "456"},
-		{EOF, ""},
+		{token.INT, "123"},
+		{token.ADD, "+"},
+		{token.INT, "456"},
+		{token.EOF, ""},
 	}
 
-	lexer := NewLexer(input)
+	scanner := NewScanner(input)
 
 	for i, tt := range expected {
-		token := lexer.NextToken()
+		tok := scanner.NextToken()
 
-		if token.Type != tt.expectedType {
-			t.Fatalf("test[%d] - token type wrong. expected=%d, got=%d", i, tt.expectedType, token.Type)
+		if tok.Type != tt.expectedType {
+			t.Fatalf("test[%d] - token type wrong. expected=%d, got=%d", i, tt.expectedType, tok.Type)
 		}
 
-		if token.Literal != tt.expectedLiteral {
-			t.Fatalf("test[%d] - token literal wrong. expected=%s, got=%s", i, tt.expectedLiteral, token.Literal)
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("test[%d] - token literal wrong. expected=%s, got=%s", i, tt.expectedLiteral, tok.Literal)
 		}
 	}
 }
@@ -126,34 +128,34 @@ func TestLexer_NextToken_ComplexExpression(t *testing.T) {
 	input := "1 + 2 * (3 - 4) / 5"
 
 	expected := []struct {
-		expectedType    Token
+		expectedType    token.Token
 		expectedLiteral string
 	}{
-		{INT, "1"},
-		{ADD, "+"},
-		{INT, "2"},
-		{MUL, "*"},
-		{LPAREN, "("},
-		{INT, "3"},
-		{SUB, "-"},
-		{INT, "4"},
-		{RPAREN, ")"},
-		{QUO, "/"},
-		{INT, "5"},
-		{EOF, ""},
+		{token.INT, "1"},
+		{token.ADD, "+"},
+		{token.INT, "2"},
+		{token.MUL, "*"},
+		{token.LPAREN, "("},
+		{token.INT, "3"},
+		{token.SUB, "-"},
+		{token.INT, "4"},
+		{token.RPAREN, ")"},
+		{token.QUO, "/"},
+		{token.INT, "5"},
+		{token.EOF, ""},
 	}
 
-	lexer := NewLexer(input)
+	scanner := NewScanner(input)
 
 	for i, tt := range expected {
-		token := lexer.NextToken()
+		tok := scanner.NextToken()
 
-		if token.Type != tt.expectedType {
-			t.Fatalf("test[%d] - token type wrong. expected=%d, got=%d", i, tt.expectedType, token.Type)
+		if tok.Type != tt.expectedType {
+			t.Fatalf("test[%d] - token type wrong. expected=%d, got=%d", i, tt.expectedType, tok.Type)
 		}
 
-		if token.Literal != tt.expectedLiteral {
-			t.Fatalf("test[%d] - token literal wrong. expected=%s, got=%s", i, tt.expectedLiteral, token.Literal)
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("test[%d] - token literal wrong. expected=%s, got=%s", i, tt.expectedLiteral, tok.Literal)
 		}
 	}
 }
@@ -161,27 +163,27 @@ func TestLexer_NextToken_ComplexExpression(t *testing.T) {
 func TestLexer_NextToken_ComparisonOperators(t *testing.T) {
 	tests := []struct {
 		input           string
-		expectedType    Token
+		expectedType    token.Token
 		expectedLiteral string
 	}{
-		{"==", EQL, "=="},
-		{"!=", NEQ, "!="},
-		{"<", LSS, "<"},
-		{">", GTR, ">"},
-		{"<=", LEQ, "<="},
-		{">=", GEQ, ">="},
+		{"==", token.EQL, "=="},
+		{"!=", token.NEQ, "!="},
+		{"<", token.LSS, "<"},
+		{">", token.GTR, ">"},
+		{"<=", token.LEQ, "<="},
+		{">=", token.GEQ, ">="},
 	}
 
 	for _, tt := range tests {
-		lexer := NewLexer(tt.input)
-		token := lexer.NextToken()
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
 
-		if token.Type != tt.expectedType {
-			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, token.Type)
+		if tok.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, tok.Type)
 		}
 
-		if token.Literal != tt.expectedLiteral {
-			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, token.Literal)
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
 		}
 	}
 }
@@ -189,24 +191,24 @@ func TestLexer_NextToken_ComparisonOperators(t *testing.T) {
 func TestLexer_NextToken_LogicalOperators(t *testing.T) {
 	tests := []struct {
 		input           string
-		expectedType    Token
+		expectedType    token.Token
 		expectedLiteral string
 	}{
-		{"&&", LAND, "&&"},
-		{"||", LOR, "||"},
-		{"!", NOT, "!"},
+		{"&&", token.LAND, "&&"},
+		{"||", token.LOR, "||"},
+		{"!", token.NOT, "!"},
 	}
 
 	for _, tt := range tests {
-		lexer := NewLexer(tt.input)
-		token := lexer.NextToken()
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
 
-		if token.Type != tt.expectedType {
-			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, token.Type)
+		if tok.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, tok.Type)
 		}
 
-		if token.Literal != tt.expectedLiteral {
-			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, token.Literal)
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
 		}
 	}
 }
@@ -214,23 +216,23 @@ func TestLexer_NextToken_LogicalOperators(t *testing.T) {
 func TestLexer_NextToken_Braces(t *testing.T) {
 	tests := []struct {
 		input           string
-		expectedType    Token
+		expectedType    token.Token
 		expectedLiteral string
 	}{
-		{"{", LBRACE, "{"},
-		{"}", RBRACE, "}"},
+		{"{", token.LBRACE, "{"},
+		{"}", token.RBRACE, "}"},
 	}
 
 	for _, tt := range tests {
-		lexer := NewLexer(tt.input)
-		token := lexer.NextToken()
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
 
-		if token.Type != tt.expectedType {
-			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, token.Type)
+		if tok.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, tok.Type)
 		}
 
-		if token.Literal != tt.expectedLiteral {
-			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, token.Literal)
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
 		}
 	}
 }
@@ -238,26 +240,26 @@ func TestLexer_NextToken_Braces(t *testing.T) {
 func TestLexer_NextToken_Keywords(t *testing.T) {
 	tests := []struct {
 		input           string
-		expectedType    Token
+		expectedType    token.Token
 		expectedLiteral string
 	}{
-		{"if", IF, "if"},
-		{"else", ELSE, "else"},
-		{"for", FOR, "for"},
-		{"break", BREAK, "break"},
-		{"continue", CONTINUE, "continue"},
+		{"if", token.IF, "if"},
+		{"else", token.ELSE, "else"},
+		{"for", token.FOR, "for"},
+		{"break", token.BREAK, "break"},
+		{"continue", token.CONTINUE, "continue"},
 	}
 
 	for _, tt := range tests {
-		lexer := NewLexer(tt.input)
-		token := lexer.NextToken()
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
 
-		if token.Type != tt.expectedType {
-			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, token.Type)
+		if tok.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, tok.Type)
 		}
 
-		if token.Literal != tt.expectedLiteral {
-			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, token.Literal)
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
 		}
 	}
 }
@@ -266,40 +268,40 @@ func TestLexer_NextToken_ControlFlowExpression(t *testing.T) {
 	input := "if x > 5 { print(x) } else { print(0) }"
 
 	expected := []struct {
-		expectedType    Token
+		expectedType    token.Token
 		expectedLiteral string
 	}{
-		{IF, "if"},
-		{IDENT, "x"},
-		{GTR, ">"},
-		{INT, "5"},
-		{LBRACE, "{"},
-		{IDENT, "print"},
-		{LPAREN, "("},
-		{IDENT, "x"},
-		{RPAREN, ")"},
-		{RBRACE, "}"},
-		{ELSE, "else"},
-		{LBRACE, "{"},
-		{IDENT, "print"},
-		{LPAREN, "("},
-		{INT, "0"},
-		{RPAREN, ")"},
-		{RBRACE, "}"},
-		{EOF, ""},
+		{token.IF, "if"},
+		{token.IDENT, "x"},
+		{token.GTR, ">"},
+		{token.INT, "5"},
+		{token.LBRACE, "{"},
+		{token.IDENT, "print"},
+		{token.LPAREN, "("},
+		{token.IDENT, "x"},
+		{token.RPAREN, ")"},
+		{token.RBRACE, "}"},
+		{token.ELSE, "else"},
+		{token.LBRACE, "{"},
+		{token.IDENT, "print"},
+		{token.LPAREN, "("},
+		{token.INT, "0"},
+		{token.RPAREN, ")"},
+		{token.RBRACE, "}"},
+		{token.EOF, ""},
 	}
 
-	lexer := NewLexer(input)
+	scanner := NewScanner(input)
 
 	for i, tt := range expected {
-		token := lexer.NextToken()
+		tok := scanner.NextToken()
 
-		if token.Type != tt.expectedType {
-			t.Fatalf("test[%d] - token type wrong. expected=%d, got=%d", i, tt.expectedType, token.Type)
+		if tok.Type != tt.expectedType {
+			t.Fatalf("test[%d] - token type wrong. expected=%d, got=%d", i, tt.expectedType, tok.Type)
 		}
 
-		if token.Literal != tt.expectedLiteral {
-			t.Fatalf("test[%d] - token literal wrong. expected=%s, got=%s", i, tt.expectedLiteral, token.Literal)
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("test[%d] - token literal wrong. expected=%s, got=%s", i, tt.expectedLiteral, tok.Literal)
 		}
 	}
 }

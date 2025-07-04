@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/yuya-takeyama/petitgo/eval"
-	"github.com/yuya-takeyama/petitgo/lexer"
 	"github.com/yuya-takeyama/petitgo/parser"
+	"github.com/yuya-takeyama/petitgo/scanner"
 )
 
 func TestMultipleStatements(t *testing.T) {
@@ -18,8 +18,8 @@ func TestMultipleStatements(t *testing.T) {
 	env := eval.NewEnvironment()
 
 	for _, stmt := range statements {
-		lexer := lexer.NewLexer(stmt)
-		parser := parser.NewParser(lexer)
+		sc := scanner.NewScanner(stmt)
+		parser := parser.NewParser(sc)
 		statement := parser.ParseStatement()
 		eval.EvalStatement(statement, env)
 	}
@@ -62,8 +62,8 @@ func TestVariableReassignment(t *testing.T) {
 	env := eval.NewEnvironment()
 
 	for _, stmt := range statements {
-		lexer := lexer.NewLexer(stmt)
-		parser := parser.NewParser(lexer)
+		sc := scanner.NewScanner(stmt)
+		parser := parser.NewParser(sc)
 		statement := parser.ParseStatement()
 		eval.EvalStatement(statement, env)
 	}
@@ -89,8 +89,8 @@ func TestComplexExpressionWithVariables(t *testing.T) {
 	env := eval.NewEnvironment()
 
 	for _, stmt := range statements {
-		lexer := lexer.NewLexer(stmt)
-		parser := parser.NewParser(lexer)
+		sc := scanner.NewScanner(stmt)
+		parser := parser.NewParser(sc)
 		statement := parser.ParseStatement()
 		eval.EvalStatement(statement, env)
 	}
