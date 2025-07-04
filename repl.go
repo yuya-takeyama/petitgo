@@ -9,8 +9,9 @@ func StartREPL() {
 	scanner := bufio.NewScanner(os.Stdin)
 	env := NewEnvironment()
 
-	print("petitgo calculator with variables\n")
-	print("Try: var x int = 42, x := 10, x = 20, or expressions like x + 5\n")
+	print("petitgo calculator with variables and control flow\n")
+	print("Try: var x int = 42, x := 10, x = 20, expressions like x + 5\n")
+	print("Control flow: if x > 5 { print(x) }, comparisons like 5 > 3\n")
 	print("Type 'exit' to quit\n")
 
 	for {
@@ -54,9 +55,28 @@ func evaluateInput(input string, env *Environment) int {
 }
 
 func isStatement(input string) bool {
-	// 簡単な判定: "var" で始まるか、":=" や " = " を含むかどうか
+	// 簡単な判定: "var", "if", "for", "break", "continue" で始まるか、":=" や " = " を含むか、{ を含むかどうか
 	if len(input) >= 3 && input[:3] == "var" {
 		return true
+	}
+	if len(input) >= 2 && input[:2] == "if" {
+		return true
+	}
+	if len(input) >= 3 && input[:3] == "for" {
+		return true
+	}
+	if len(input) >= 5 && input[:5] == "break" {
+		return true
+	}
+	if len(input) >= 8 && input[:8] == "continue" {
+		return true
+	}
+
+	// { を含む（ブロック文）
+	for i := 0; i < len(input); i++ {
+		if input[i] == '{' {
+			return true
+		}
 	}
 
 	// := を含む
@@ -93,27 +113,4 @@ func evaluateExpression(input string) int {
 // fmt を使わずに文字列を出力
 func print(s string) {
 	os.Stdout.WriteString(s)
-}
-
-// fmt を使わずに整数を出力
-func printInt(n int) {
-	if n == 0 {
-		print("0")
-		return
-	}
-
-	if n < 0 {
-		print("-")
-		n = -n
-	}
-
-	// 数値を文字列に変換
-	digits := ""
-	for n > 0 {
-		digit := n % 10
-		digits = string(rune('0'+digit)) + digits
-		n = n / 10
-	}
-
-	print(digits)
 }

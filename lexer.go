@@ -29,14 +29,48 @@ const (
 
 	ASSIGN // := or =
 
+	// Comparison operators
+	EQL // ==
+	NEQ // !=
+	LSS // <
+	GTR // >
+	LEQ // <=
+	GEQ // >=
+
+	// Logical operators
+	LAND // &&
+	LOR  // ||
+	NOT  // !
+
 	LPAREN // (
 	RPAREN // )
+	LBRACE // {
+	RBRACE // }
 	operator_end
+
+	keyword_beg
+	// Keywords
+	IF       // if
+	ELSE     // else
+	FOR      // for
+	BREAK    // break
+	CONTINUE // continue
+	keyword_end
 )
 
 type TokenInfo struct {
 	Type    Token
 	Literal string
+}
+
+// Keywords map for keyword detection
+var keywords = map[string]Token{
+	"if":       IF,
+	"else":     ELSE,
+	"for":      FOR,
+	"break":    BREAK,
+	"continue": CONTINUE,
+	"var":      IDENT, // var is handled as IDENT for now
 }
 
 type Lexer struct {
@@ -79,14 +113,55 @@ func (l *Lexer) NextToken() TokenInfo {
 			return TokenInfo{Type: ASSIGN, Literal: ":="}
 		}
 	case '=':
+		if l.position+1 < len(l.input) && l.input[l.position+1] == '=' {
+			l.position += 2
+			return TokenInfo{Type: EQL, Literal: "=="}
+		}
 		l.position++
 		return TokenInfo{Type: ASSIGN, Literal: "="}
+	case '!':
+		if l.position+1 < len(l.input) && l.input[l.position+1] == '=' {
+			l.position += 2
+			return TokenInfo{Type: NEQ, Literal: "!="}
+		}
+		l.position++
+		return TokenInfo{Type: NOT, Literal: "!"}
+	case '<':
+		if l.position+1 < len(l.input) && l.input[l.position+1] == '=' {
+			l.position += 2
+			return TokenInfo{Type: LEQ, Literal: "<="}
+		}
+		l.position++
+		return TokenInfo{Type: LSS, Literal: "<"}
+	case '>':
+		if l.position+1 < len(l.input) && l.input[l.position+1] == '=' {
+			l.position += 2
+			return TokenInfo{Type: GEQ, Literal: ">="}
+		}
+		l.position++
+		return TokenInfo{Type: GTR, Literal: ">"}
+	case '&':
+		if l.position+1 < len(l.input) && l.input[l.position+1] == '&' {
+			l.position += 2
+			return TokenInfo{Type: LAND, Literal: "&&"}
+		}
+	case '|':
+		if l.position+1 < len(l.input) && l.input[l.position+1] == '|' {
+			l.position += 2
+			return TokenInfo{Type: LOR, Literal: "||"}
+		}
 	case '(':
 		l.position++
 		return TokenInfo{Type: LPAREN, Literal: "("}
 	case ')':
 		l.position++
 		return TokenInfo{Type: RPAREN, Literal: ")"}
+	case '{':
+		l.position++
+		return TokenInfo{Type: LBRACE, Literal: "{"}
+	case '}':
+		l.position++
+		return TokenInfo{Type: RBRACE, Literal: "}"}
 	}
 
 	// 識別子を読み取る（文字で始まる）
@@ -97,6 +172,15 @@ func (l *Lexer) NextToken() TokenInfo {
 		}
 
 		literal := l.input[start:l.position]
+
+		// キーワードかチェック
+		if tokenType, isKeyword := keywords[literal]; isKeyword {
+			return TokenInfo{
+				Type:    tokenType,
+				Literal: literal,
+			}
+		}
+
 		return TokenInfo{
 			Type:    IDENT,
 			Literal: literal,

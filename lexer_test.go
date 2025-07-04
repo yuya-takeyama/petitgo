@@ -157,3 +157,149 @@ func TestLexer_NextToken_ComplexExpression(t *testing.T) {
 		}
 	}
 }
+
+func TestLexer_NextToken_ComparisonOperators(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedType    Token
+		expectedLiteral string
+	}{
+		{"==", EQL, "=="},
+		{"!=", NEQ, "!="},
+		{"<", LSS, "<"},
+		{">", GTR, ">"},
+		{"<=", LEQ, "<="},
+		{">=", GEQ, ">="},
+	}
+
+	for _, tt := range tests {
+		lexer := NewLexer(tt.input)
+		token := lexer.NextToken()
+
+		if token.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, token.Type)
+		}
+
+		if token.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, token.Literal)
+		}
+	}
+}
+
+func TestLexer_NextToken_LogicalOperators(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedType    Token
+		expectedLiteral string
+	}{
+		{"&&", LAND, "&&"},
+		{"||", LOR, "||"},
+		{"!", NOT, "!"},
+	}
+
+	for _, tt := range tests {
+		lexer := NewLexer(tt.input)
+		token := lexer.NextToken()
+
+		if token.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, token.Type)
+		}
+
+		if token.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, token.Literal)
+		}
+	}
+}
+
+func TestLexer_NextToken_Braces(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedType    Token
+		expectedLiteral string
+	}{
+		{"{", LBRACE, "{"},
+		{"}", RBRACE, "}"},
+	}
+
+	for _, tt := range tests {
+		lexer := NewLexer(tt.input)
+		token := lexer.NextToken()
+
+		if token.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, token.Type)
+		}
+
+		if token.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, token.Literal)
+		}
+	}
+}
+
+func TestLexer_NextToken_Keywords(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedType    Token
+		expectedLiteral string
+	}{
+		{"if", IF, "if"},
+		{"else", ELSE, "else"},
+		{"for", FOR, "for"},
+		{"break", BREAK, "break"},
+		{"continue", CONTINUE, "continue"},
+	}
+
+	for _, tt := range tests {
+		lexer := NewLexer(tt.input)
+		token := lexer.NextToken()
+
+		if token.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, token.Type)
+		}
+
+		if token.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, token.Literal)
+		}
+	}
+}
+
+func TestLexer_NextToken_ControlFlowExpression(t *testing.T) {
+	input := "if x > 5 { print(x) } else { print(0) }"
+
+	expected := []struct {
+		expectedType    Token
+		expectedLiteral string
+	}{
+		{IF, "if"},
+		{IDENT, "x"},
+		{GTR, ">"},
+		{INT, "5"},
+		{LBRACE, "{"},
+		{IDENT, "print"},
+		{LPAREN, "("},
+		{IDENT, "x"},
+		{RPAREN, ")"},
+		{RBRACE, "}"},
+		{ELSE, "else"},
+		{LBRACE, "{"},
+		{IDENT, "print"},
+		{LPAREN, "("},
+		{INT, "0"},
+		{RPAREN, ")"},
+		{RBRACE, "}"},
+		{EOF, ""},
+	}
+
+	lexer := NewLexer(input)
+
+	for i, tt := range expected {
+		token := lexer.NextToken()
+
+		if token.Type != tt.expectedType {
+			t.Fatalf("test[%d] - token type wrong. expected=%d, got=%d", i, tt.expectedType, token.Type)
+		}
+
+		if token.Literal != tt.expectedLiteral {
+			t.Fatalf("test[%d] - token literal wrong. expected=%s, got=%s", i, tt.expectedLiteral, token.Literal)
+		}
+	}
+}
