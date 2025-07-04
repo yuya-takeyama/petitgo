@@ -37,6 +37,9 @@ Thumbs.db
 !.claude/settings.json
 !.claude/hooks/
 
+# Local documentation (not tracked)
+CLAUDE.local.md
+
 # Build output
 petitgo
 dist/
