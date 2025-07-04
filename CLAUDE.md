@@ -229,6 +229,8 @@ petitgo/
   - [x] if文条件パース問題（struct literal誤判定）
   - [x] 関数再帰実行でのnilポインタ問題
   - [x] EvalValueWithEnvironment統合
+  - [x] Phase 3 統合テストのValue型対応（2025-07-04修正）
+  - [x] parseIfCondition修正（数値比較式の正しい解析）
 
 **現在のファイル構造更新:**
 
@@ -344,4 +346,13 @@ petitgo/
 
 ## 開発メモリ
 
-- 作業がある程度進んだら docs を更新して /clear に備えます
+### 2025-07-04 作業内容
+- Phase 3 統合テストがValue型システムで失敗していた問題を修正
+- `parseIfCondition` が数値から始まる比較式（`1 > 0`）を正しく解析できていなかった
+- `parseTerm()` から `ParseExpression()` に変更して解決
+- 全テストが通ることを確認済み
+
+### 次回の作業
+- Phase 9: Self-hosting の実装開始
+- petitgo ソースコードを petitgo でコンパイルできるようにする
+- 必要な Go 機能の追加実装から着手
