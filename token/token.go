@@ -66,6 +66,8 @@ const (
 	FALSE    // false
 	STRUCT   // struct
 	TYPE     // type
+	PACKAGE  // package
+	IMPORT   // import
 	keyword_end
 )
 

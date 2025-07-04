@@ -23,6 +23,11 @@ func (p *Parser) nextToken() {
 }
 
 func (p *Parser) ParseStatement() ast.Statement {
+	// Check for EOF first
+	if p.currentToken.Type == token.EOF {
+		return nil
+	}
+
 	switch p.currentToken.Type {
 	case token.IDENT:
 		if p.currentToken.Literal == "var" {
@@ -49,6 +54,10 @@ func (p *Parser) ParseStatement() ast.Statement {
 		return p.parseReturnStatement()
 	case token.TYPE:
 		return p.parseStructDefinition()
+	case token.PACKAGE:
+		return p.parsePackageStatement()
+	case token.IMPORT:
+		return p.parseImportStatement()
 	case token.LBRACE:
 		return p.parseBlockStatement()
 	default:
@@ -155,7 +164,7 @@ func (p *Parser) parseIfCondition() ast.ASTNode {
 			// Binary comparison: IDENT op EXPR
 			operator := p.currentToken.Type
 			p.nextToken()
-			right := p.ParseExpression()
+			right := p.parseTerm()
 			return &ast.BinaryOpNode{
 				Left:     &ast.VariableNode{Name: name},
 				Operator: operator,
@@ -168,7 +177,7 @@ func (p *Parser) parseIfCondition() ast.ASTNode {
 	}
 
 	// For other cases, use normal expression parsing
-	return p.ParseExpression()
+	return p.parseTerm()
 }
 
 func (p *Parser) parseForStatement() ast.Statement {
@@ -620,5 +629,41 @@ func (p *Parser) parseSliceLiteral(elementType string) ast.ASTNode {
 	return &ast.SliceLiteral{
 		ElementType: elementType,
 		Elements:    elements,
+	}
+}
+
+// parsePackageStatement parses package declarations: package main
+func (p *Parser) parsePackageStatement() ast.Statement {
+	// consume 'package'
+	p.nextToken()
+
+	// package name
+	if p.currentToken.Type != token.IDENT {
+		// error: expected package name
+		return nil
+	}
+	name := p.currentToken.Literal
+	p.nextToken()
+
+	return &ast.PackageStatement{
+		Name: name,
+	}
+}
+
+// parseImportStatement parses import declarations: import "fmt"
+func (p *Parser) parseImportStatement() ast.Statement {
+	// consume 'import'
+	p.nextToken()
+
+	// import path (string literal)
+	if p.currentToken.Type != token.STRING {
+		// error: expected string literal
+		return nil
+	}
+	path := p.currentToken.Literal
+	p.nextToken()
+
+	return &ast.ImportStatement{
+		Path: path,
 	}
 }

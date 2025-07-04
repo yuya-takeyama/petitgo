@@ -234,3 +234,25 @@ type IndexAccess struct {
 func (n *IndexAccess) String() string {
 	return "IndexAccess"
 }
+
+// PackageStatement represents a package declaration (package main)
+type PackageStatement struct {
+	Name string // package name
+}
+
+func (n *PackageStatement) String() string {
+	return "PackageStatement"
+}
+
+func (n *PackageStatement) statement() {}
+
+// ImportStatement represents an import declaration (import "fmt")
+type ImportStatement struct {
+	Path string // import path like "fmt", "os"
+}
+
+func (n *ImportStatement) String() string {
+	return "ImportStatement"
+}
+
+func (n *ImportStatement) statement() {}

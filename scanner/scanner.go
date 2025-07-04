@@ -15,6 +15,8 @@ var keywords = map[string]token.Token{
 	"false":    token.FALSE,
 	"struct":   token.STRUCT,
 	"type":     token.TYPE,
+	"package":  token.PACKAGE,
+	"import":   token.IMPORT,
 	"var":      token.IDENT, // var is handled as token.IDENT for now
 }
 

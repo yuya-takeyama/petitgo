@@ -452,6 +452,14 @@ func EvalStatement(stmt ast.Statement, env *Environment) {
 	case *ast.StructDefinition:
 		// Register struct definition in environment
 		env.SetStruct(s.Name, s)
+	case *ast.PackageStatement:
+		// Handle package declaration
+		// For now, just store the package name in environment
+		env.SetPackage(s.Name)
+	case *ast.ImportStatement:
+		// Handle import declaration
+		// For now, just store the import path in environment
+		env.AddImport(s.Path)
 	}
 }
 

@@ -15,6 +15,8 @@ type Environment struct {
 	variables map[string]Value
 	functions map[string]*Function
 	structs   map[string]*ast.StructDefinition
+	pkg       string   // current package name
+	imports   []string // imported packages
 }
 
 func NewEnvironment() *Environment {
@@ -22,6 +24,8 @@ func NewEnvironment() *Environment {
 		variables: make(map[string]Value),
 		functions: make(map[string]*Function),
 		structs:   make(map[string]*ast.StructDefinition),
+		pkg:       "main", // default package
+		imports:   make([]string, 0),
 	}
 }
 
@@ -65,4 +69,24 @@ func (env *Environment) SetStruct(name string, definition *ast.StructDefinition)
 func (env *Environment) GetStruct(name string) (*ast.StructDefinition, bool) {
 	definition, exists := env.structs[name]
 	return definition, exists
+}
+
+// SetPackage sets the current package name
+func (env *Environment) SetPackage(name string) {
+	env.pkg = name
+}
+
+// GetPackage returns the current package name
+func (env *Environment) GetPackage() string {
+	return env.pkg
+}
+
+// AddImport adds an import path to the environment
+func (env *Environment) AddImport(path string) {
+	env.imports = append(env.imports, path)
+}
+
+// GetImports returns all imported package paths
+func (env *Environment) GetImports() []string {
+	return env.imports
 }
