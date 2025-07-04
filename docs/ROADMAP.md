@@ -59,10 +59,24 @@ petitgo は小さな Go 実装で、最終的にはセルフホスト（自分�
 - **実装内容**:
   - [x] 基本型（int, string, bool）
   - [x] Value システム（型情報付き評価）
-  - [ ] 型チェック
-  - [ ] 型推論
-  - [ ] 構造体（struct）
-  - [ ] スライス
+  - [x] 型チェック（変数宣言、関数引数）
+  - [x] 型推論（:= 代入文）
+  - [x] 型安全性（型不一致時のゼロ値フォールバック）
+  - [ ] 構造体（struct）- 部分実装済み
+  - [ ] スライス - 部分実装済み
+  - [x] 包括的テストスイート（type_system_test.go, type_checking_test.go, type_inference_test.go）
+
+**完了した機能**:
+- IntValue, StringValue, BoolValue, StructValue, SliceValue の Value インターフェース
+- var 文での型宣言チェック（var x int = "string" → zero value 使用）
+- 関数引数の型チェック（引数不足や型不一致も対応）
+- := での型推論（x := 42 → int 型として推論）
+- 既存変数への型安全な再代入（型不一致時はゼロ値使用）
+
+**進行中の機能**:
+- StructValue と SliceValue の完全実装（基盤は完成）
+- struct type declarations と field access
+- slice literals と indexing
 
 ### Phase 6: Standard Library (Minimal)
 - **目標**: 最小限の標準ライブラリ

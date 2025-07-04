@@ -205,3 +205,63 @@ petitgo/
 - ビルド・テスト完全成功（`go build`, `go test ./...` 全て通過）
 - REPL 動作確認完了
 - ファイル命名規則の統一
+
+### Phase 5: Type System 🚧 **大幅進捗！**
+
+- [x] Value インターフェース設計（完了）
+  - [x] IntValue, StringValue, BoolValue の実装
+  - [x] StructValue, SliceValue の基盤実装
+  - [x] Type(), String(), IsTruthy() メソッド
+- [x] 型チェックシステム（完了）
+  - [x] 変数宣言時の型検証（var x int = "string" → zero value）
+  - [x] 関数引数の型チェック（引数不足・型不一致対応）
+  - [x] 型安全な再代入（既存変数の型保護）
+- [x] 型推論システム（完了）
+  - [x] := 代入での自動型推定
+  - [x] 式評価結果からの型決定
+  - [x] 型不一致時のゼロ値フォールバック
+- [x] 包括的テストスイート（完了）
+  - [x] type_system_test.go - 基本型システムテスト
+  - [x] type_checking_test.go - 型チェック機能テスト
+  - [x] type_inference_test.go - 型推論機能テスト
+  - [x] struct_test.go, slice_test.go - 構造体・スライステスト
+- [x] バグ修正（完了）
+  - [x] if文条件パース問題（struct literal誤判定）
+  - [x] 関数再帰実行でのnilポインタ問題
+  - [x] EvalValueWithEnvironment統合
+
+**現在のファイル構造更新:**
+
+```
+petitgo/
+├── main.go              # CLI entry point
+├── token/              # Token definitions
+│   └── token.go
+├── scanner/            # Lexical analysis
+│   ├── scanner.go
+│   ├── scanner_test.go
+│   └── scanner_identifiers_test.go
+├── ast/                # AST node definitions
+│   └── ast.go
+├── parser/             # Syntax analysis
+│   ├── parser.go
+│   └── parser_test.go
+├── eval/               # Evaluation with type system
+│   ├── environment.go
+│   ├── eval.go
+│   ├── value.go        # Value interface & implementations
+│   ├── slice_test.go
+│   ├── struct_test.go
+│   ├── type_checking_test.go
+│   ├── type_inference_test.go
+│   └── type_system_test.go
+└── repl/               # REPL
+    └── repl.go
+```
+
+**次の実装予定:**
+- [ ] struct type declarations の完全実装
+- [ ] struct field access の改善
+- [ ] slice literals と indexing の完全実装
+- [ ] parser tests の修正（parseIfCondition影響）
+- [ ] REPL での型情報表示改善
