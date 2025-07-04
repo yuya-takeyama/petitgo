@@ -121,3 +121,39 @@ func TestLexer_NextToken_WhitespaceSkipping(t *testing.T) {
 		}
 	}
 }
+
+func TestLexer_NextToken_ComplexExpression(t *testing.T) {
+	input := "1 + 2 * (3 - 4) / 5"
+
+	expected := []struct {
+		expectedType    TokenType
+		expectedLiteral string
+	}{
+		{NUMBER, "1"},
+		{PLUS, "+"},
+		{NUMBER, "2"},
+		{STAR, "*"},
+		{LPAREN, "("},
+		{NUMBER, "3"},
+		{MINUS, "-"},
+		{NUMBER, "4"},
+		{RPAREN, ")"},
+		{SLASH, "/"},
+		{NUMBER, "5"},
+		{EOF, ""},
+	}
+
+	lexer := NewLexer(input)
+
+	for i, tt := range expected {
+		token := lexer.NextToken()
+
+		if token.Type != tt.expectedType {
+			t.Fatalf("test[%d] - token type wrong. expected=%s, got=%s", i, tt.expectedType, token.Type)
+		}
+
+		if token.Literal != tt.expectedLiteral {
+			t.Fatalf("test[%d] - token literal wrong. expected=%s, got=%s", i, tt.expectedLiteral, token.Literal)
+		}
+	}
+}
