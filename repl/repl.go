@@ -37,12 +37,12 @@ func StartREPL() {
 
 		// 入力を評価
 		result := evaluateInput(input, env)
-		printInt(result)
+		printValue(result)
 		print("\n")
 	}
 }
 
-func evaluateInput(input string, env *eval.Environment) int {
+func evaluateInput(input string, env *eval.Environment) eval.Value {
 	sc := scanner.NewScanner(input)
 	parser := parser.NewParser(sc)
 
@@ -50,11 +50,11 @@ func evaluateInput(input string, env *eval.Environment) int {
 	if isStatement(input) {
 		stmt := parser.ParseStatement()
 		eval.EvalStatement(stmt, env)
-		// Statement の場合は結果を返さない（0 を返す）
-		return 0
+		// Statement の場合は結果を返さない（空文字列を返す）
+		return &eval.StringValue{Value: ""}
 	} else {
 		expr := parser.ParseExpression()
-		return eval.EvalWithEnvironment(expr, env)
+		return eval.EvalValueWithEnvironment(expr, env)
 	}
 }
 
@@ -110,6 +110,13 @@ func isStatement(input string) bool {
 // fmt を使わずに文字列を出力
 func print(s string) {
 	os.Stdout.WriteString(s)
+}
+
+// printValue outputs a Value using its String() method
+func printValue(v eval.Value) {
+	if v != nil && v.String() != "" {
+		print(v.String())
+	}
 }
 
 // 数値を文字列に変換して出力する（fmt なしで）

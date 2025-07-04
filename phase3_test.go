@@ -45,7 +45,7 @@ func TestPhase3_IfStatement(t *testing.T) {
 	eval.EvalStatement(stmt, env)
 
 	// x が設定されているかチェック
-	value, exists := env.Get("x")
+	value, exists := env.GetInt("x")
 	if !exists {
 		t.Errorf("variable x should exist")
 	}
@@ -66,7 +66,7 @@ func TestPhase3_IfElseStatement(t *testing.T) {
 	eval.EvalStatement(stmt, env)
 
 	// x が else ブロックの値になっているかチェック
-	value, exists := env.Get("x")
+	value, exists := env.GetInt("x")
 	if !exists {
 		t.Errorf("variable x should exist")
 	}
@@ -78,8 +78,8 @@ func TestPhase3_IfElseStatement(t *testing.T) {
 func TestPhase3_SimpleVariableComparison(t *testing.T) {
 	// 変数を使った比較のテスト
 	env := eval.NewEnvironment()
-	env.Set("x", 10)
-	env.Set("y", 5)
+	env.SetInt("x", 10)
+	env.SetInt("y", 5)
 
 	sc := scanner.NewScanner("x > y")
 	parser := parser.NewParser(sc)

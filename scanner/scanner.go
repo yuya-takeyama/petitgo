@@ -13,6 +13,8 @@ var keywords = map[string]token.Token{
 	"return":   token.RETURN,
 	"true":     token.TRUE,
 	"false":    token.FALSE,
+	"struct":   token.STRUCT,
+	"type":     token.TYPE,
 	"var":      token.IDENT, // var is handled as token.IDENT for now
 }
 
@@ -63,6 +65,8 @@ func (s *Scanner) NextToken() token.TokenInfo {
 			s.position += 2
 			return token.TokenInfo{Type: token.ASSIGN, Literal: ":="}
 		}
+		s.position++
+		return token.TokenInfo{Type: token.COLON, Literal: ":"}
 	case '=':
 		if s.position+1 < len(s.input) && s.input[s.position+1] == '=' {
 			s.position += 2
@@ -116,6 +120,15 @@ func (s *Scanner) NextToken() token.TokenInfo {
 	case ',':
 		s.position++
 		return token.TokenInfo{Type: token.COMMA, Literal: ","}
+	case '.':
+		s.position++
+		return token.TokenInfo{Type: token.PERIOD, Literal: "."}
+	case '[':
+		s.position++
+		return token.TokenInfo{Type: token.LBRACK, Literal: "["}
+	case ']':
+		s.position++
+		return token.TokenInfo{Type: token.RBRACK, Literal: "]"}
 	case '"':
 		return s.readString()
 	}

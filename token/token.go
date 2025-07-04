@@ -47,6 +47,10 @@ const (
 	LBRACE // {
 	RBRACE // }
 	COMMA  // ,
+	PERIOD // .
+	COLON  // :
+	LBRACK // [
+	RBRACK // ]
 	operator_end
 
 	keyword_beg
@@ -60,6 +64,8 @@ const (
 	RETURN   // return
 	TRUE     // true
 	FALSE    // false
+	STRUCT   // struct
+	TYPE     // type
 	keyword_end
 )
 

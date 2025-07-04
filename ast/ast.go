@@ -171,3 +171,66 @@ type ReturnStatement struct {
 func (n *ReturnStatement) String() string {
 	return "ReturnStatement"
 }
+
+// StructField represents a field in a struct definition
+type StructField struct {
+	Name string
+	Type string
+}
+
+// StructDefinition represents a struct type definition (type Person struct { ... })
+type StructDefinition struct {
+	Name   string
+	Fields []StructField
+}
+
+func (n *StructDefinition) String() string {
+	return "StructDefinition"
+}
+
+func (n *StructDefinition) statement() {}
+
+// StructLiteral represents a struct literal (Person{Name: "Alice", Age: 25})
+type StructLiteral struct {
+	TypeName string
+	Fields   map[string]ASTNode // field name -> value expression
+}
+
+func (n *StructLiteral) String() string {
+	return "StructLiteral"
+}
+
+// FieldAccess represents field access (person.Name)
+type FieldAccess struct {
+	Object ASTNode // the struct instance
+	Field  string  // field name
+}
+
+func (n *FieldAccess) String() string {
+	return "FieldAccess"
+}
+
+// SliceType represents a slice type ([]int, []string, etc.)
+type SliceType struct {
+	ElementType string
+}
+
+// SliceLiteral represents a slice literal ([]int{1, 2, 3})
+type SliceLiteral struct {
+	ElementType string
+	Elements    []ASTNode
+}
+
+func (n *SliceLiteral) String() string {
+	return "SliceLiteral"
+}
+
+// IndexAccess represents slice/array indexing (slice[0])
+type IndexAccess struct {
+	Object ASTNode // the slice/array
+	Index  ASTNode // index expression
+}
+
+func (n *IndexAccess) String() string {
+	return "IndexAccess"
+}

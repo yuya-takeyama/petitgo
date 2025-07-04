@@ -47,6 +47,8 @@ func (p *Parser) ParseStatement() ast.Statement {
 		return p.parseFuncStatement()
 	case token.RETURN:
 		return p.parseReturnStatement()
+	case token.TYPE:
+		return p.parseStructDefinition()
 	case token.LBRACE:
 		return p.parseBlockStatement()
 	default:
@@ -101,13 +103,13 @@ func (p *Parser) parseIfStatement() ast.Statement {
 	// if
 	p.nextToken()
 
-	// condition
-	condition := p.ParseExpression()
+	// condition - special handling for if statement context
+	condition := p.parseIfCondition()
 
 	// {
 	if p.currentToken.Type != token.LBRACE {
-		// エラー: とりあえずダミーを返す
-		return &ast.IfStatement{}
+		// エラー: とりあえずダミーを返す（conditionは設定する）
+		return &ast.IfStatement{Condition: condition}
 	}
 
 	// then block
@@ -128,6 +130,27 @@ func (p *Parser) parseIfStatement() ast.Statement {
 		ThenBlock: thenBlock,
 		ElseBlock: elseBlock,
 	}
+}
+
+// parseIfCondition parses conditions in if statements (prevents struct literal confusion)
+func (p *Parser) parseIfCondition() ast.ASTNode {
+	// For now, simple approach: if IDENT followed by LBRACE, treat as variable
+	if p.currentToken.Type == token.IDENT {
+		name := p.currentToken.Literal
+		p.nextToken()
+
+		// If followed by LBRACE, this is likely the start of if block, not struct literal
+		if p.currentToken.Type == token.LBRACE {
+			return &ast.VariableNode{Name: name}
+		}
+
+		// Otherwise, put token back and use normal expression parsing
+		// For now, simple implementation - just return variable
+		return &ast.VariableNode{Name: name}
+	}
+
+	// For other cases, use normal expression parsing
+	return p.ParseExpression()
 }
 
 func (p *Parser) parseForStatement() ast.Statement {
@@ -311,7 +334,40 @@ func (p *Parser) parseFactor() ast.ASTNode {
 			return &ast.CallNode{Function: name, Arguments: arguments}
 		}
 
-		return &ast.VariableNode{Name: name}
+		// struct literal かチェック (Person{...})
+		if p.currentToken.Type == token.LBRACE {
+			return p.parseStructLiteral(name)
+		}
+
+		// 変数または struct instance として処理
+		var result ast.ASTNode = &ast.VariableNode{Name: name}
+
+		// field access チェック (.field) or index access ([index])
+		for p.currentToken.Type == token.PERIOD || p.currentToken.Type == token.LBRACK {
+			if p.currentToken.Type == token.PERIOD {
+				p.nextToken() // '.' を消費
+				if p.currentToken.Type == token.IDENT {
+					fieldName := p.currentToken.Literal
+					p.nextToken()
+					result = &ast.FieldAccess{
+						Object: result,
+						Field:  fieldName,
+					}
+				}
+			} else if p.currentToken.Type == token.LBRACK {
+				p.nextToken() // '[' を消費
+				index := p.ParseExpression()
+				if p.currentToken.Type == token.RBRACK {
+					p.nextToken() // ']' を消費
+				}
+				result = &ast.IndexAccess{
+					Object: result,
+					Index:  index,
+				}
+			}
+		}
+
+		return result
 	}
 
 	if p.currentToken.Type == token.LPAREN {
@@ -321,6 +377,21 @@ func (p *Parser) parseFactor() ast.ASTNode {
 			p.nextToken() // ')' を消費
 		}
 		return expr
+	}
+
+	// Slice literal: []type{elements...}
+	if p.currentToken.Type == token.LBRACK {
+		p.nextToken() // '[' を消費
+		if p.currentToken.Type == token.RBRACK {
+			p.nextToken() // ']' を消費
+			if p.currentToken.Type == token.IDENT {
+				elementType := p.currentToken.Literal
+				p.nextToken()
+				if p.currentToken.Type == token.LBRACE {
+					return p.parseSliceLiteral(elementType)
+				}
+			}
+		}
 	}
 
 	// エラーケース: とりあえず 0 を返す
@@ -400,4 +471,136 @@ func (p *Parser) parseReturnStatement() ast.Statement {
 	}
 
 	return &ast.ReturnStatement{Value: value}
+}
+
+// parseStructDefinition parses struct definitions: type Person struct { Name string; Age int }
+func (p *Parser) parseStructDefinition() ast.Statement {
+	// consume 'type'
+	p.nextToken()
+
+	// expect struct name
+	if p.currentToken.Type != token.IDENT {
+		return nil // error: expected identifier
+	}
+	structName := p.currentToken.Literal
+	p.nextToken()
+
+	// expect 'struct'
+	if p.currentToken.Type != token.STRUCT {
+		return nil // error: expected 'struct'
+	}
+	p.nextToken()
+
+	// expect '{'
+	if p.currentToken.Type != token.LBRACE {
+		return nil // error: expected '{'
+	}
+	p.nextToken()
+
+	// parse fields
+	var fields []ast.StructField
+	for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
+		// parse field: Name Type
+		if p.currentToken.Type != token.IDENT {
+			break // error: expected field name
+		}
+		fieldName := p.currentToken.Literal
+		p.nextToken()
+
+		if p.currentToken.Type != token.IDENT {
+			break // error: expected field type
+		}
+		fieldType := p.currentToken.Literal
+		p.nextToken()
+
+		fields = append(fields, ast.StructField{
+			Name: fieldName,
+			Type: fieldType,
+		})
+
+		// skip optional semicolon or newline
+		if p.currentToken.Type == token.IDENT && p.currentToken.Literal == ";" {
+			p.nextToken()
+		}
+	}
+
+	// expect '}'
+	if p.currentToken.Type == token.RBRACE {
+		p.nextToken()
+	}
+
+	return &ast.StructDefinition{
+		Name:   structName,
+		Fields: fields,
+	}
+}
+
+// parseStructLiteral parses struct literals: Person{Name: "Alice", Age: 25}
+func (p *Parser) parseStructLiteral(typeName string) ast.ASTNode {
+	// '{' は既に確認済み
+	p.nextToken() // '{' を消費
+
+	fields := make(map[string]ast.ASTNode)
+
+	for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
+		// field name
+		if p.currentToken.Type != token.IDENT {
+			break
+		}
+		fieldName := p.currentToken.Literal
+		p.nextToken()
+
+		// expect ':'
+		if p.currentToken.Type != token.COLON {
+			break // error: expected ':'
+		}
+		p.nextToken() // ':' を消費
+
+		// field value
+		value := p.ParseExpression()
+		fields[fieldName] = value
+
+		// skip comma if present
+		if p.currentToken.Type == token.COMMA {
+			p.nextToken()
+		}
+	}
+
+	// consume '}'
+	if p.currentToken.Type == token.RBRACE {
+		p.nextToken()
+	}
+
+	return &ast.StructLiteral{
+		TypeName: typeName,
+		Fields:   fields,
+	}
+}
+
+// parseSliceLiteral parses slice literals: []int{1, 2, 3}
+func (p *Parser) parseSliceLiteral(elementType string) ast.ASTNode {
+	// '{' は既に確認済み
+	p.nextToken() // '{' を消費
+
+	var elements []ast.ASTNode
+
+	for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
+		element := p.ParseExpression()
+		elements = append(elements, element)
+
+		// skip comma if present
+		if p.currentToken.Type == token.COMMA {
+			p.nextToken()
+		}
+	}
+
+	// consume '}'
+	if p.currentToken.Type == token.RBRACE {
+		p.nextToken()
+	}
+
+	return &ast.SliceLiteral{
+		ElementType: elementType,
+		Elements:    elements,
+	}
 }

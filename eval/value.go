@@ -40,3 +40,29 @@ func (v *BoolValue) String() string {
 	return "false"
 }
 func (v *BoolValue) IsTruthy() bool { return v.Value }
+
+// StructValue represents a struct instance
+type StructValue struct {
+	TypeName string
+	Fields   map[string]Value
+}
+
+func (v *StructValue) Type() string { return v.TypeName }
+func (v *StructValue) String() string {
+	// For now, simple representation
+	return fmt.Sprintf("%s{...}", v.TypeName)
+}
+func (v *StructValue) IsTruthy() bool { return v.Fields != nil }
+
+// SliceValue represents a slice
+type SliceValue struct {
+	ElementType string
+	Elements    []Value
+}
+
+func (v *SliceValue) Type() string { return "[]" + v.ElementType }
+func (v *SliceValue) String() string {
+	// For now, simple representation
+	return fmt.Sprintf("[%d elements]", len(v.Elements))
+}
+func (v *SliceValue) IsTruthy() bool { return len(v.Elements) > 0 }

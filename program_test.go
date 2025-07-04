@@ -25,7 +25,7 @@ func TestMultipleStatements(t *testing.T) {
 	}
 
 	// x = 10
-	x, exists := env.Get("x")
+	x, exists := env.GetInt("x")
 	if !exists {
 		t.Fatalf("expected variable 'x' to exist")
 	}
@@ -34,7 +34,7 @@ func TestMultipleStatements(t *testing.T) {
 	}
 
 	// y = 20
-	y, exists := env.Get("y")
+	y, exists := env.GetInt("y")
 	if !exists {
 		t.Fatalf("expected variable 'y' to exist")
 	}
@@ -43,7 +43,7 @@ func TestMultipleStatements(t *testing.T) {
 	}
 
 	// z = 30
-	z, exists := env.Get("z")
+	z, exists := env.GetInt("z")
 	if !exists {
 		t.Fatalf("expected variable 'z' to exist")
 	}
@@ -69,7 +69,7 @@ func TestVariableReassignment(t *testing.T) {
 	}
 
 	// x should be 30 ((10 + 5) * 2)
-	x, exists := env.Get("x")
+	x, exists := env.GetInt("x")
 	if !exists {
 		t.Fatalf("expected variable 'x' to exist")
 	}
@@ -96,7 +96,7 @@ func TestComplexExpressionWithVariables(t *testing.T) {
 	}
 
 	// result should be 14 (2 + 3 * 4)
-	result, exists := env.Get("result")
+	result, exists := env.GetInt("result")
 	if !exists {
 		t.Fatalf("expected variable 'result' to exist")
 	}
