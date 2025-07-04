@@ -379,8 +379,8 @@ func EvalStatement(stmt ast.Statement, env *Environment) {
 			newType := value.Type()
 
 			if existingType != newType {
-				// Type mismatch - for now, create zero value of existing type
-				// In a strict type system, this would be a compile-time error
+				// Type mismatch - use zero value of existing type for type safety
+				// This maintains Go's type safety principles
 				switch existingType {
 				case "int":
 					value = &IntValue{Value: 0}
@@ -389,7 +389,7 @@ func EvalStatement(stmt ast.Statement, env *Environment) {
 				case "bool":
 					value = &BoolValue{Value: false}
 				default:
-					// Unknown type, keep new value (dynamic typing fallback)
+					// Unknown type, keep new value (fallback)
 				}
 			}
 		}

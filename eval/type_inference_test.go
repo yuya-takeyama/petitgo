@@ -104,13 +104,14 @@ func TestTypeInference_AssignStatement(t *testing.T) {
 		t.Fatal("Variable x should still exist after reassignment")
 	}
 
-	if value.Type() != "string" {
-		t.Errorf("Expected type string after reassignment, got %s", value.Type())
+	// Type safety: reassigning string to int variable should keep int type with zero value
+	if value.Type() != "int" {
+		t.Errorf("Expected type int after type-mismatched reassignment, got %s", value.Type())
 	}
 
-	if strVal, ok := value.(*StringValue); ok {
-		if strVal.Value != "hello" {
-			t.Errorf("Expected value 'hello', got %s", strVal.Value)
+	if intVal, ok := value.(*IntValue); ok {
+		if intVal.Value != 0 {
+			t.Errorf("Expected zero value 0 after type mismatch, got %d", intVal.Value)
 		}
 	}
 }

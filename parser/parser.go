@@ -134,18 +134,36 @@ func (p *Parser) parseIfStatement() ast.Statement {
 
 // parseIfCondition parses conditions in if statements (prevents struct literal confusion)
 func (p *Parser) parseIfCondition() ast.ASTNode {
-	// For now, simple approach: if IDENT followed by LBRACE, treat as variable
+	// For if conditions, we need to be careful about struct literal vs variable references
+	// If we see IDENT followed by LBRACE, treat it as a variable, not a struct literal
 	if p.currentToken.Type == token.IDENT {
 		name := p.currentToken.Literal
 		p.nextToken()
 
-		// If followed by LBRACE, this is likely the start of if block, not struct literal
+		// If the next token is LBRACE, this is definitely a variable reference
+		// because the LBRACE belongs to the if statement block
 		if p.currentToken.Type == token.LBRACE {
 			return &ast.VariableNode{Name: name}
 		}
 
-		// Otherwise, put token back and use normal expression parsing
-		// For now, simple implementation - just return variable
+		// If not LBRACE, parse as normal expression (might be comparison, etc.)
+		// We need to "put back" the IDENT token and parse normally
+		// For now, handle simple cases
+		if p.currentToken.Type == token.GTR || p.currentToken.Type == token.LSS ||
+			p.currentToken.Type == token.EQL || p.currentToken.Type == token.NEQ ||
+			p.currentToken.Type == token.LEQ || p.currentToken.Type == token.GEQ {
+			// Binary comparison: IDENT op EXPR
+			operator := p.currentToken.Type
+			p.nextToken()
+			right := p.ParseExpression()
+			return &ast.BinaryOpNode{
+				Left:     &ast.VariableNode{Name: name},
+				Operator: operator,
+				Right:    right,
+			}
+		}
+
+		// Just a variable reference
 		return &ast.VariableNode{Name: name}
 	}
 
