@@ -44,13 +44,17 @@ func TestPhase3_IfStatement(t *testing.T) {
 	env := eval.NewEnvironment()
 	eval.EvalStatement(stmt, env)
 
-	// x が設定されているかチェック
-	value, exists := env.GetInt("x")
+	// x が設定されているかチェック（新しいValue型システムを使用）
+	value, exists := env.Get("x")
 	if !exists {
 		t.Errorf("variable x should exist")
 	}
-	if value != 42 {
-		t.Errorf("expected x to be 42, got %d", value)
+	if intVal, ok := value.(*eval.IntValue); ok {
+		if intVal.Value != 42 {
+			t.Errorf("expected x to be 42, got %d", intVal.Value)
+		}
+	} else {
+		t.Errorf("expected x to be an IntValue, got %T", value)
 	}
 }
 
@@ -65,13 +69,17 @@ func TestPhase3_IfElseStatement(t *testing.T) {
 	env := eval.NewEnvironment()
 	eval.EvalStatement(stmt, env)
 
-	// x が else ブロックの値になっているかチェック
-	value, exists := env.GetInt("x")
+	// x が else ブロックの値になっているかチェック（新しいValue型システムを使用）
+	value, exists := env.Get("x")
 	if !exists {
 		t.Errorf("variable x should exist")
 	}
-	if value != 24 {
-		t.Errorf("expected x to be 24, got %d", value)
+	if intVal, ok := value.(*eval.IntValue); ok {
+		if intVal.Value != 24 {
+			t.Errorf("expected x to be 24, got %d", intVal.Value)
+		}
+	} else {
+		t.Errorf("expected x to be an IntValue, got %T", value)
 	}
 }
 

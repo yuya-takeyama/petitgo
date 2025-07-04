@@ -177,7 +177,8 @@ func (p *Parser) parseIfCondition() ast.ASTNode {
 	}
 
 	// For other cases, use normal expression parsing
-	return p.parseTerm()
+	// This handles cases like "1 > 0", "x + y > 5", etc.
+	return p.ParseExpression()
 }
 
 func (p *Parser) parseForStatement() ast.Statement {
