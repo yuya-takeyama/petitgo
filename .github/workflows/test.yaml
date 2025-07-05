@@ -53,11 +53,19 @@ jobs:
           fi
           echo "REPL test passed: 2 + 3 = 5"
 
-      - name: Test example compilation
+      - name: Test fibonacci execution
         run: |
           if [ -f examples/fibonacci.pg ]; then
-            ./petitgo ast examples/fibonacci.pg > /dev/null
-            echo "AST generation test passed"
+            output=$(./petitgo run examples/fibonacci.pg | tr '\n' ' ')
+            expected="0 1 1 2 3 5 8 13 21 34 "
+            if [ "$output" = "$expected" ]; then
+              echo "Fibonacci test passed: $output"
+            else
+              echo "Fibonacci test failed!"
+              echo "Expected: $expected"
+              echo "Got:      $output"
+              exit 1
+            fi
           fi
 
       - name: Test native compilation on macOS ARM64
