@@ -14,7 +14,7 @@
           },
           {
             "type": "command",
-            "command": ".claude/hooks/prettier.sh"
+            "command": "jq -r '.tool_input.file_path | select(endswith(\".md\") or endswith(\".json\") or endswith(\".yaml\") or endswith(\".yml\"))' | xargs -r .claude/hooks/prettier.sh"
           },
           {
             "type": "command",

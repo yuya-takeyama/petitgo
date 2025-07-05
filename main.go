@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/yuya-takeyama/petitgo/asmgen"
@@ -111,11 +112,11 @@ func buildFile(filename string) {
 	// Generate ARM64 assembly directly (no more Go codegen)
 	generator := asmgen.NewAsmGenerator()
 	assembly := generator.Generate(statements)
-	runtime := generator.GenerateRuntime()
+	runtimeCode := generator.GenerateRuntime()
 
 	// Write assembly to temporary file
 	asmFile := "/tmp/petitgo_temp.s"
-	fullAsm := assembly + runtime
+	fullAsm := assembly + runtimeCode
 	err = os.WriteFile(asmFile, []byte(fullAsm), 0644)
 	if err != nil {
 		fmt.Printf("Error writing assembly file: %v\n", err)
@@ -125,15 +126,37 @@ func buildFile(filename string) {
 	// Get output filename
 	outputName := strings.TrimSuffix(filename, filepath.Ext(filename))
 
-	// Assemble and link (using system tools, not go build)
-	cmd := exec.Command("as", "-arch", "arm64", "-o", "/tmp/petitgo_temp.o", asmFile)
+	// Assemble and link (platform-specific commands)
+	var cmd *exec.Cmd
+	objFile := "/tmp/petitgo_temp.o"
+
+	if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+		// macOS ARM64
+		cmd = exec.Command("as", "-arch", "arm64", "-o", objFile, asmFile)
+	} else if runtime.GOOS == "linux" && runtime.GOARCH == "amd64" {
+		// Linux x86_64
+		cmd = exec.Command("as", "--64", "-o", objFile, asmFile)
+	} else {
+		fmt.Printf("Unsupported platform: %s/%s\n", runtime.GOOS, runtime.GOARCH)
+		fmt.Println("Supported platforms: darwin/arm64, linux/amd64")
+		os.Exit(1)
+	}
+
 	err = cmd.Run()
 	if err != nil {
 		fmt.Printf("Error assembling: %v\n", err)
 		os.Exit(1)
 	}
 
-	cmd = exec.Command("clang", "-arch", "arm64", "-o", outputName, "/tmp/petitgo_temp.o")
+	// Platform-specific linker
+	if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+		// macOS ARM64
+		cmd = exec.Command("clang", "-arch", "arm64", "-o", outputName, objFile)
+	} else if runtime.GOOS == "linux" && runtime.GOARCH == "amd64" {
+		// Linux x86_64
+		cmd = exec.Command("ld", "-o", outputName, objFile)
+	}
+
 	err = cmd.Run()
 	if err != nil {
 		fmt.Printf("Error linking: %v\n", err)
@@ -161,7 +184,7 @@ func runFile(filename string) {
 	// Generate ARM64 assembly directly
 	generator := asmgen.NewAsmGenerator()
 	assembly := generator.Generate(statements)
-	runtime := generator.GenerateRuntime()
+	runtimeCode := generator.GenerateRuntime()
 
 	// Create temporary files properly
 	tempDir := os.TempDir()
@@ -175,7 +198,7 @@ func runFile(filename string) {
 	defer os.Remove(asmFile.Name())
 
 	// Write assembly content
-	fullAsm := assembly + runtime
+	fullAsm := assembly + runtimeCode
 	_, err = asmFile.WriteString(fullAsm)
 	asmFile.Close()
 	if err != nil {
@@ -201,15 +224,36 @@ func runFile(filename string) {
 	execFile.Close()
 	defer os.Remove(execFile.Name())
 
-	// Assemble and link
-	cmd := exec.Command("as", "-arch", "arm64", "-o", objFile.Name(), asmFile.Name())
+	// Assemble and link (platform-specific commands)
+	var cmd *exec.Cmd
+
+	if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+		// macOS ARM64
+		cmd = exec.Command("as", "-arch", "arm64", "-o", objFile.Name(), asmFile.Name())
+	} else if runtime.GOOS == "linux" && runtime.GOARCH == "amd64" {
+		// Linux x86_64
+		cmd = exec.Command("as", "--64", "-o", objFile.Name(), asmFile.Name())
+	} else {
+		fmt.Printf("Unsupported platform: %s/%s\n", runtime.GOOS, runtime.GOARCH)
+		fmt.Println("Supported platforms: darwin/arm64, linux/amd64")
+		os.Exit(1)
+	}
+
 	err = cmd.Run()
 	if err != nil {
 		fmt.Printf("Error assembling: %v\n", err)
 		os.Exit(1)
 	}
 
-	cmd = exec.Command("clang", "-arch", "arm64", "-o", execFile.Name(), objFile.Name())
+	// Platform-specific linker
+	if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+		// macOS ARM64
+		cmd = exec.Command("clang", "-arch", "arm64", "-o", execFile.Name(), objFile.Name())
+	} else if runtime.GOOS == "linux" && runtime.GOARCH == "amd64" {
+		// Linux x86_64
+		cmd = exec.Command("ld", "-o", execFile.Name(), objFile.Name())
+	}
+
 	err = cmd.Run()
 	if err != nil {
 		fmt.Printf("Error linking: %v\n", err)
