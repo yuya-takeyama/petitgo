@@ -728,4 +728,57 @@ petitgo/
 - REPL テストは現在「> 5」パターンでチェック (出力形式変更時要調整)
 - Windows 対応追加時は新しいジェネレータが必要
 - 既知の課題は NEXT_FEATURES.md 参照
-- **次の目標: asmgen パッケージのカバレッジ改善** (現在 20.8%)
+
+### 2025-07-05 作業内容 (asmgen パッケージのテストカバレッジ大幅改善 🎉)
+
+- **asmgen パッケージカバレッジ 20.8% → 94.2% 達成** 🚀
+  - ARM64 と x86_64 両方のアセンブリジェネレータの包括的テスト追加
+  - ビルドタグ除去によるクロスプラットフォーム対応 (M1 Mac でも x86_64 テスト実行可能)
+  - 0% カバレッジ関数の完全攻略 (for文、return文、switch文、function call等)
+  - generateStatement の全分岐テスト (VarStatement, ReassignStatement, ExpressionStatement)
+  - generateExpression の未カバー分岐テスト (StringNode, VariableNode, FieldAccessNode)
+  - generateFunction のパラメータ処理とmain以外の関数テスト
+  - getFieldOffset の全フィールドタイプテスト (name, age, z, unknown等)
+  - generateIfStatement の if/else 分岐テスト
+
+**テストカバレッジ改善の詳細:**
+
+- **20.8% → 33.2%** (ARM64 未実装機能テスト追加)
+- **33.2% → 71.2%** (ビルドタグ除去、x86_64 テスト追加)
+- **71.2% → 82.5%** (正しいAST型使用、generateFunctionCall等)
+- **82.5% → 87.7%** (if/else文テスト追加)
+- **87.7% → 90.1%** (VarStatement, ReassignStatement テスト)
+- **90.1% → 91.8%** (パラメータ付き関数テスト)
+- **91.8% → 94.2%** (x86_64 generator の包括的テスト)
+
+**最終カバレッジ成果 (更新):**
+
+- ✅ scanner パッケージ: **100.0%** (完璧!)
+- ✅ ast パッケージ: **100.0%** (完璧!)
+- 🏆 parser パッケージ: **98.0%** (素晴らしい改善!)
+- 🚀 asmgen パッケージ: **94.2%** (大幅改善!)
+
+**技術的な改善点:**
+
+- アセンブリコード生成のテストがプラットフォーム非依存で実行可能に
+- ARM64 と x86_64 両方のジェネレータの品質保証
+- generateFunctionCall, generateFieldAccess, generateSliceLiteral 等の未実装機能もテスト可能
+- ビルドタグ除去により開発効率とCI効率が向上
+- テスト駆動開発 (TDD) によるコード品質の大幅向上
+
+**達成された品質向上 (更新):**
+
+- エラーパス・エッジケースの徹底的なテスト
+- EOF 処理とエラーハンドリングの検証
+- AST ノードの完全性保証
+- 型安全性と堅牢性の向上
+- アセンブリ生成機能の信頼性向上
+- 実用性の高いテストカバレッジ
+
+### 引き継ぎ事項
+
+- REPL テストは現在「> 5」パターンでチェック (出力形式変更時要調整)
+- Windows 対応追加時は新しいジェネレータが必要
+- 既知の課題は NEXT_FEATURES.md 参照
+- **asmgen パッケージで残り5.8%のカバレッジ改善余地** (主にNewAsmGeneratorのGOOS/GOARCH分岐)
+- x86_64 とARM64の実際のアセンブリ実行テストは別途CI環境で実施
