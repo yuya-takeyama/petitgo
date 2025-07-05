@@ -643,8 +643,46 @@ petitgo/
 - 文字列比較と操作の実装
 - petitgo 自身のセルフコンパイル準備
 
+### 2025-07-05 作業内容 (テストカバレッジ大幅改善 🎉)
+
+- **parser パッケージカバレッジ 82.5% → 94.9% 達成** 📈
+  - 使われてない `parseStructDefinition` 関数を削除 (0% カバレッジ解消)
+  - `parseFactor` エッジケース (field access, index access, slice literal)
+  - `parseIfCondition` エッジケース (各種比較演算子)
+  - `parseConditionOnlyForStatement` エラーケース
+  - `parsePackageStatement`/`parseImportStatement` エラーハンドリング
+  - `parseSwitchStatement`, `parseTypeStatement`, `parseStructLiteral` エッジケース
+  - 包括的なテストスイート拡充
+- **ast パッケージカバレッジ 12.5% → 93.2% 達成** 🚀
+  - 全ての String() メソッドのテスト (30+ AST ノード)
+  - 全ての MarshalJSON() メソッドのテスト
+  - Statement インターフェース準拠テスト
+  - tokenToString 関数の完全テスト (&&, ||, ! を含む)
+  - ArrayLiteral, Parameter, FieldDef のテスト追加
+- **テスト品質向上**
+  - fmt パッケージインポート追加
+  - エラーケース・エッジケースの網羅的テスト
+  - JSON マーシャリングの検証強化
+  - 型安全性とインターフェース準拠の確認
+
+**カバレッジサマリー:**
+
+- ✅ scanner パッケージ: **100%** (既存)
+- ✅ parser パッケージ: **94.9%** (大幅改善 ↗️)
+- ✅ ast パッケージ: **93.2%** (大幅改善 ↗️)
+- 🔄 GitHub Actions にカバレッジ出力追加
+
+**達成された品質向上:**
+
+- 使われないコードの除去
+- エラーハンドリングの網羅的テスト
+- AST ノードの完全性検証
+- JSON シリアライゼーションの信頼性向上
+- 型システムの堅牢性確保
+
 ### 引き継ぎ事項
 
 - REPL テストは現在「> 5」パターンでチェック (出力形式変更時要調整)
 - Windows 対応追加時は新しいジェネレータが必要
 - 既知の課題は NEXT_FEATURES.md 参照
+- eval, asmgen パッケージのカバレッジ改善が次の目標

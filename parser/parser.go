@@ -797,66 +797,6 @@ func (p *Parser) parseReturnStatement() ast.Statement {
 }
 
 // parseStructDefinition parses struct definitions: type Person struct { Name string; Age int }
-func (p *Parser) parseStructDefinition() ast.Statement {
-	// consume 'type'
-	p.nextToken()
-
-	// expect struct name
-	if p.currentToken.Type != token.IDENT {
-		return nil // error: expected identifier
-	}
-	structName := p.currentToken.Literal
-	p.nextToken()
-
-	// expect 'struct'
-	if p.currentToken.Type != token.STRUCT {
-		return nil // error: expected 'struct'
-	}
-	p.nextToken()
-
-	// expect '{'
-	if p.currentToken.Type != token.LBRACE {
-		return nil // error: expected '{'
-	}
-	p.nextToken()
-
-	// parse fields
-	var fields []ast.StructField
-	for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
-		// parse field: Name Type
-		if p.currentToken.Type != token.IDENT {
-			break // error: expected field name
-		}
-		fieldName := p.currentToken.Literal
-		p.nextToken()
-
-		if p.currentToken.Type != token.IDENT {
-			break // error: expected field type
-		}
-		fieldType := p.currentToken.Literal
-		p.nextToken()
-
-		fields = append(fields, ast.StructField{
-			Name: fieldName,
-			Type: fieldType,
-		})
-
-		// skip optional semicolon or newline
-		if p.currentToken.Type == token.IDENT && p.currentToken.Literal == ";" {
-			p.nextToken()
-		}
-	}
-
-	// expect '}'
-	if p.currentToken.Type == token.RBRACE {
-		p.nextToken()
-	}
-
-	return &ast.StructDefinition{
-		Name:   structName,
-		Fields: fields,
-	}
-}
 
 // parseStructLiteral parses struct literals: Person{Name: "Alice", Age: 25}
 func (p *Parser) parseStructLiteral(typeName string) ast.ASTNode {
