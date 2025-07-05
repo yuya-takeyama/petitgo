@@ -394,15 +394,24 @@ print_digits:
     
 print_loop:
     decq %rcx
-    movb (%rsi,%rcx,1), %dl
+    movb (%rsi,%rcx,1), %al  # Load character to %al
+    
+    # Save registers before syscall
+    pushq %rsi
+    pushq %rcx
     
     # Write system call
+    subq $16, %rsp        # Allocate space for character
+    movb %al, (%rsp)      # Store character on stack
     movq $1, %rax         # sys_write
     movq $1, %rdi         # stdout
-    leaq -25(%rbp), %rsi  # temporary buffer
-    movb %dl, (%rsi)      # store character
+    movq %rsp, %rsi       # buffer (character on stack)
     movq $1, %rdx         # length
     syscall
+    
+    addq $16, %rsp        # Deallocate character space
+    popq %rcx             # Restore counter
+    popq %rsi             # Restore buffer pointer
     
     testq %rcx, %rcx
     jnz print_loop
