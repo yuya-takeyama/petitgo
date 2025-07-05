@@ -194,12 +194,8 @@ func (p *Parser) parseSwitchStatement() ast.Statement {
 	// switch
 	p.nextToken()
 
-	// value to switch on - use simple identifier for now to avoid ParseExpression issues
-	if p.currentToken.Type != token.IDENT {
-		return &ast.SwitchStatement{}
-	}
-	value := &ast.VariableNode{Name: p.currentToken.Literal}
-	p.nextToken()
+	// value to switch on
+	value := p.ParseExpression()
 
 	// {
 	if p.currentToken.Type != token.LBRACE {
