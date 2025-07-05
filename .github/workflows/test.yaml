@@ -46,7 +46,12 @@ jobs:
       - name: Test REPL functionality
         timeout-minutes: 1
         run: |
-          echo "2 + 3" | ./petitgo || true
+          result=$(echo "2 + 3" | ./petitgo | grep -o '^5$' | head -1)
+          if [ "$result" != "5" ]; then
+            echo "Error: Expected output '5' but got different result"
+            exit 1
+          fi
+          echo "REPL test passed: 2 + 3 = 5"
 
       - name: Test example compilation
         run: |
