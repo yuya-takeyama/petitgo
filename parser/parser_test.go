@@ -278,3 +278,352 @@ func TestParseBlockStatement(t *testing.T) {
 		t.Errorf("expected 2 statements in block, got %d", len(blockStmt.Statements))
 	}
 }
+
+// Test variable declaration (var statement)
+func TestParseVarStatement(t *testing.T) {
+	input := "var x int = 42"
+	sc := scanner.NewScanner(input)
+	parser := NewParser(sc)
+
+	stmt := parser.ParseStatement()
+
+	varStmt, ok := stmt.(*ast.VarStatement)
+	if !ok {
+		t.Fatalf("expected *ast.VarStatement, got %T", stmt)
+	}
+
+	if varStmt.Name != "x" {
+		t.Errorf("expected variable name 'x', got %s", varStmt.Name)
+	}
+
+	if varStmt.TypeName != "int" {
+		t.Errorf("expected variable type 'int', got %s", varStmt.TypeName)
+	}
+
+	numberNode, ok := varStmt.Value.(*ast.NumberNode)
+	if !ok {
+		t.Fatalf("expected value to be NumberNode, got %T", varStmt.Value)
+	}
+
+	if numberNode.Value != 42 {
+		t.Errorf("expected value 42, got %d", numberNode.Value)
+	}
+}
+
+// Test reassignment statement
+func TestParseReassignStatement(t *testing.T) {
+	input := "x = 10"
+	sc := scanner.NewScanner(input)
+	parser := NewParser(sc)
+
+	stmt := parser.ParseStatement()
+
+	reassignStmt, ok := stmt.(*ast.ReassignStatement)
+	if !ok {
+		t.Fatalf("expected *ast.ReassignStatement, got %T", stmt)
+	}
+
+	if reassignStmt.Name != "x" {
+		t.Errorf("expected variable name 'x', got %s", reassignStmt.Name)
+	}
+
+	numberNode, ok := reassignStmt.Value.(*ast.NumberNode)
+	if !ok {
+		t.Fatalf("expected value to be NumberNode, got %T", reassignStmt.Value)
+	}
+
+	if numberNode.Value != 10 {
+		t.Errorf("expected value 10, got %d", numberNode.Value)
+	}
+}
+
+// Test increment statement
+func TestParseIncStatement(t *testing.T) {
+	input := "x++"
+	sc := scanner.NewScanner(input)
+	parser := NewParser(sc)
+
+	stmt := parser.ParseStatement()
+
+	incStmt, ok := stmt.(*ast.IncStatement)
+	if !ok {
+		t.Fatalf("expected *ast.IncStatement, got %T", stmt)
+	}
+
+	if incStmt.Name != "x" {
+		t.Errorf("expected variable name 'x', got %s", incStmt.Name)
+	}
+}
+
+// Test decrement statement
+func TestParseDecStatement(t *testing.T) {
+	input := "x--"
+	sc := scanner.NewScanner(input)
+	parser := NewParser(sc)
+
+	stmt := parser.ParseStatement()
+
+	decStmt, ok := stmt.(*ast.DecStatement)
+	if !ok {
+		t.Fatalf("expected *ast.DecStatement, got %T", stmt)
+	}
+
+	if decStmt.Name != "x" {
+		t.Errorf("expected variable name 'x', got %s", decStmt.Name)
+	}
+}
+
+// Test compound assignment statements
+func TestParseCompoundAssignStatement(t *testing.T) {
+	tests := []struct {
+		input            string
+		expectedOperator token.Token
+	}{
+		{"x += 5", token.ADD_ASSIGN},
+		{"y -= 3", token.SUB_ASSIGN},
+		{"z *= 2", token.MUL_ASSIGN},
+		{"w /= 4", token.QUO_ASSIGN},
+	}
+
+	for _, tt := range tests {
+		sc := scanner.NewScanner(tt.input)
+		parser := NewParser(sc)
+
+		stmt := parser.ParseStatement()
+
+		compoundStmt, ok := stmt.(*ast.CompoundAssignStatement)
+		if !ok {
+			t.Fatalf("expected *ast.CompoundAssignStatement for %s, got %T", tt.input, stmt)
+		}
+
+		if compoundStmt.Operator != tt.expectedOperator {
+			t.Errorf("expected operator %v for %s, got %v", tt.expectedOperator, tt.input, compoundStmt.Operator)
+		}
+	}
+}
+
+// Test switch statement
+func TestParseSwitchStatement(t *testing.T) {
+	input := `switch x {
+	case 1:
+		print("one")
+	case 2:
+		print("two")  
+	default:
+		print("other")
+	}`
+	sc := scanner.NewScanner(input)
+	parser := NewParser(sc)
+
+	stmt := parser.ParseStatement()
+
+	switchStmt, ok := stmt.(*ast.SwitchStatement)
+	if !ok {
+		t.Fatalf("expected *ast.SwitchStatement, got %T", stmt)
+	}
+
+	// Check value expression
+	varNode, ok := switchStmt.Value.(*ast.VariableNode)
+	if !ok {
+		t.Fatalf("expected switch value to be VariableNode, got %T", switchStmt.Value)
+	}
+	if varNode.Name != "x" {
+		t.Errorf("expected switch value 'x', got %s", varNode.Name)
+	}
+
+	// Check cases
+	if len(switchStmt.Cases) != 2 {
+		t.Errorf("expected 2 cases, got %d", len(switchStmt.Cases))
+	}
+
+	// Check default case exists
+	if switchStmt.Default == nil {
+		t.Errorf("expected default case to exist")
+	}
+}
+
+// Test package statement
+func TestParsePackageStatement(t *testing.T) {
+	input := "package main"
+	sc := scanner.NewScanner(input)
+	parser := NewParser(sc)
+
+	stmt := parser.ParseStatement()
+
+	packageStmt, ok := stmt.(*ast.PackageStatement)
+	if !ok {
+		t.Fatalf("expected *ast.PackageStatement, got %T", stmt)
+	}
+
+	if packageStmt.Name != "main" {
+		t.Errorf("expected package name 'main', got %s", packageStmt.Name)
+	}
+}
+
+// Test import statement
+func TestParseImportStatement(t *testing.T) {
+	input := `import "fmt"`
+	sc := scanner.NewScanner(input)
+	parser := NewParser(sc)
+
+	stmt := parser.ParseStatement()
+
+	importStmt, ok := stmt.(*ast.ImportStatement)
+	if !ok {
+		t.Fatalf("expected *ast.ImportStatement, got %T", stmt)
+	}
+
+	if importStmt.Path != "fmt" {
+		t.Errorf("expected import path 'fmt', got %s", importStmt.Path)
+	}
+}
+
+// Test full for statement with init, condition, and update
+func TestParseFullForStatement(t *testing.T) {
+	input := "for i := 0; i < 10; i++ { print(i) }"
+	sc := scanner.NewScanner(input)
+	parser := NewParser(sc)
+
+	stmt := parser.ParseStatement()
+
+	forStmt, ok := stmt.(*ast.ForStatement)
+	if !ok {
+		t.Fatalf("expected *ast.ForStatement, got %T", stmt)
+	}
+
+	// Check init statement
+	if forStmt.Init == nil {
+		t.Fatalf("expected init statement to exist")
+	}
+
+	initStmt, ok := forStmt.Init.(*ast.AssignStatement)
+	if !ok {
+		t.Fatalf("expected init to be AssignStatement, got %T", forStmt.Init)
+	}
+
+	if initStmt.Name != "i" {
+		t.Errorf("expected init variable 'i', got %s", initStmt.Name)
+	}
+
+	// Check condition
+	if forStmt.Condition == nil {
+		t.Fatalf("expected condition to exist")
+	}
+
+	// Check update statement
+	if forStmt.Update == nil {
+		t.Fatalf("expected update statement to exist")
+	}
+
+	updateStmt, ok := forStmt.Update.(*ast.IncStatement)
+	if !ok {
+		t.Fatalf("expected update to be IncStatement, got %T", forStmt.Update)
+	}
+
+	if updateStmt.Name != "i" {
+		t.Errorf("expected update variable 'i', got %s", updateStmt.Name)
+	}
+}
+
+// Test struct definition
+func TestParseStructDefinition(t *testing.T) {
+	input := `type Person struct {
+		name string
+		age int
+	}`
+	sc := scanner.NewScanner(input)
+	parser := NewParser(sc)
+
+	stmt := parser.ParseStatement()
+
+	typeStmt, ok := stmt.(*ast.TypeStatement)
+	if !ok {
+		t.Fatalf("expected *ast.TypeStatement, got %T", stmt)
+	}
+
+	if typeStmt.Name != "Person" {
+		t.Errorf("expected struct name 'Person', got %s", typeStmt.Name)
+	}
+
+	if len(typeStmt.Fields) != 2 {
+		t.Errorf("expected 2 fields, got %d", len(typeStmt.Fields))
+	}
+
+	// Check first field
+	if typeStmt.Fields[0].Name != "name" {
+		t.Errorf("expected first field name 'name', got %s", typeStmt.Fields[0].Name)
+	}
+	if typeStmt.Fields[0].Type != "string" {
+		t.Errorf("expected first field type 'string', got %s", typeStmt.Fields[0].Type)
+	}
+
+	// Check second field
+	if typeStmt.Fields[1].Name != "age" {
+		t.Errorf("expected second field name 'age', got %s", typeStmt.Fields[1].Name)
+	}
+	if typeStmt.Fields[1].Type != "int" {
+		t.Errorf("expected second field type 'int', got %s", typeStmt.Fields[1].Type)
+	}
+}
+
+// Test struct literal
+func TestParseStructLiteral(t *testing.T) {
+	input := `Person{name: "John", age: 30}`
+	sc := scanner.NewScanner(input)
+	parser := NewParser(sc)
+
+	expr := parser.ParseExpression()
+
+	structLit, ok := expr.(*ast.StructLiteral)
+	if !ok {
+		t.Fatalf("expected *ast.StructLiteral, got %T", expr)
+	}
+
+	if structLit.TypeName != "Person" {
+		t.Errorf("expected struct type 'Person', got %s", structLit.TypeName)
+	}
+
+	if len(structLit.Fields) != 2 {
+		t.Errorf("expected 2 fields, got %d", len(structLit.Fields))
+	}
+
+	// Check that name and age fields exist
+	if _, exists := structLit.Fields["name"]; !exists {
+		t.Errorf("expected 'name' field to exist")
+	}
+
+	if _, exists := structLit.Fields["age"]; !exists {
+		t.Errorf("expected 'age' field to exist")
+	}
+}
+
+// Test slice literal
+func TestParseSliceLiteral(t *testing.T) {
+	input := `[]int{1, 2, 3}`
+	sc := scanner.NewScanner(input)
+	parser := NewParser(sc)
+
+	expr := parser.ParseExpression()
+
+	sliceLit, ok := expr.(*ast.SliceLiteral)
+	if !ok {
+		t.Fatalf("expected *ast.SliceLiteral, got %T", expr)
+	}
+
+	if sliceLit.ElementType != "int" {
+		t.Errorf("expected slice type 'int', got %s", sliceLit.ElementType)
+	}
+
+	if len(sliceLit.Elements) != 3 {
+		t.Errorf("expected 3 elements, got %d", len(sliceLit.Elements))
+	}
+
+	// Check first element
+	firstNum, ok := sliceLit.Elements[0].(*ast.NumberNode)
+	if !ok {
+		t.Fatalf("expected first element to be NumberNode, got %T", sliceLit.Elements[0])
+	}
+	if firstNum.Value != 1 {
+		t.Errorf("expected first element value 1, got %d", firstNum.Value)
+	}
+}
