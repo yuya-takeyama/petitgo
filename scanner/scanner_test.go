@@ -321,3 +321,340 @@ func TestLexer_NextToken_ControlFlowExpression(t *testing.T) {
 		}
 	}
 }
+
+// Test Input() method
+func TestScanner_Input(t *testing.T) {
+	input := "test input string"
+	scanner := NewScanner(input)
+
+	if scanner.Input() != input {
+		t.Fatalf("Input() wrong. expected=%s, got=%s", input, scanner.Input())
+	}
+}
+
+// Test Position() method
+func TestScanner_Position(t *testing.T) {
+	input := "123 + 456"
+	scanner := NewScanner(input)
+
+	// Initial position should be 0
+	if scanner.Position() != 0 {
+		t.Fatalf("Initial position wrong. expected=0, got=%d", scanner.Position())
+	}
+
+	// After scanning first token, position should advance
+	scanner.NextToken() // "123"
+	pos1 := scanner.Position()
+	if pos1 <= 0 {
+		t.Fatalf("Position should advance after scanning. got=%d", pos1)
+	}
+
+	scanner.NextToken() // "+"
+	pos2 := scanner.Position()
+	if pos2 <= pos1 {
+		t.Fatalf("Position should advance further. pos1=%d, pos2=%d", pos1, pos2)
+	}
+}
+
+// Test string literals
+func TestScanner_StringLiterals(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedType    token.Token
+		expectedLiteral string
+	}{
+		{`"hello"`, token.STRING, "hello"},
+		{`"world"`, token.STRING, "world"},
+		{`""`, token.STRING, ""},
+		{`"hello world"`, token.STRING, "hello world"},
+	}
+
+	for _, tt := range tests {
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
+
+		if tok.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, tok.Type)
+		}
+
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
+		}
+	}
+}
+
+// Test string escape sequences
+func TestScanner_StringEscapeSequences(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedLiteral string
+	}{
+		{`"hello\nworld"`, "hello\nworld"},
+		{`"hello\tworld"`, "hello\tworld"},
+		{`"hello\rworld"`, "hello\rworld"},
+		{`"say \"hello\""`, `say "hello"`},
+		{`"path\\file"`, `path\file`},
+	}
+
+	for _, tt := range tests {
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
+
+		if tok.Type != token.STRING {
+			t.Fatalf("token type wrong. expected=%d, got=%d", token.STRING, tok.Type)
+		}
+
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
+		}
+	}
+}
+
+// Test unclosed string literal
+func TestScanner_UncloseStringLiteral(t *testing.T) {
+	input := `"unclosed string`
+	scanner := NewScanner(input)
+	tok := scanner.NextToken()
+
+	if tok.Type != token.ILLEGAL {
+		t.Fatalf("token type wrong. expected=%d, got=%d", token.ILLEGAL, tok.Type)
+	}
+
+	if tok.Literal != "unclosed string" {
+		t.Fatalf("token literal wrong. expected=%s, got=%s", "unclosed string", tok.Literal)
+	}
+}
+
+// Test line comments
+func TestScanner_LineComments(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedLiteral string
+	}{
+		{"// this is a comment", "// this is a comment"},
+		{"// another comment", "// another comment"},
+		{"//no space", "//no space"},
+		{"// comment with spaces  ", "// comment with spaces  "},
+	}
+
+	for _, tt := range tests {
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
+
+		if tok.Type != token.COMMENT {
+			t.Fatalf("token type wrong. expected=%d, got=%d", token.COMMENT, tok.Type)
+		}
+
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
+		}
+	}
+}
+
+// Test block comments
+func TestScanner_BlockComments(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedLiteral string
+	}{
+		{"/* single line */", "/* single line */"},
+		{"/* multi\nline\ncomment */", "/* multi\nline\ncomment */"},
+		{"/*no spaces*/", "/*no spaces*/"},
+		{"/* nested // comment */", "/* nested // comment */"},
+	}
+
+	for _, tt := range tests {
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
+
+		if tok.Type != token.COMMENT {
+			t.Fatalf("token type wrong. expected=%d, got=%d", token.COMMENT, tok.Type)
+		}
+
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
+		}
+	}
+}
+
+// Test increment and decrement operators
+func TestScanner_IncrementDecrement(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedType    token.Token
+		expectedLiteral string
+	}{
+		{"++", token.INC, "++"},
+		{"--", token.DEC, "--"},
+	}
+
+	for _, tt := range tests {
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
+
+		if tok.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, tok.Type)
+		}
+
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
+		}
+	}
+}
+
+// Test compound assignment operators
+func TestScanner_CompoundAssignment(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedType    token.Token
+		expectedLiteral string
+	}{
+		{"+=", token.ADD_ASSIGN, "+="},
+		{"-=", token.SUB_ASSIGN, "-="},
+		{"*=", token.MUL_ASSIGN, "*="},
+		{"/=", token.QUO_ASSIGN, "/="},
+	}
+
+	for _, tt := range tests {
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
+
+		if tok.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, tok.Type)
+		}
+
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
+		}
+	}
+}
+
+// Test assignment operators
+func TestScanner_AssignmentOperators(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedType    token.Token
+		expectedLiteral string
+	}{
+		{":=", token.ASSIGN, ":="},
+		{"=", token.ASSIGN, "="},
+		{":", token.COLON, ":"},
+	}
+
+	for _, tt := range tests {
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
+
+		if tok.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, tok.Type)
+		}
+
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
+		}
+	}
+}
+
+// Test unknown escape sequences
+func TestScanner_UnknownEscapeSequences(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedLiteral string
+	}{
+		{`"hello\xworld"`, `hello\xworld`}, // Unknown escape \x
+		{`"test\zmore"`, `test\zmore`},     // Unknown escape \z
+	}
+
+	for _, tt := range tests {
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
+
+		if tok.Type != token.STRING {
+			t.Fatalf("token type wrong. expected=%d, got=%d", token.STRING, tok.Type)
+		}
+
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
+		}
+	}
+}
+
+// Test additional punctuation tokens
+func TestScanner_AdditionalPunctuation(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedType    token.Token
+		expectedLiteral string
+	}{
+		{".", token.PERIOD, "."},
+		{";", token.SEMICOLON, ";"},
+		{"[", token.LBRACK, "["},
+		{"]", token.RBRACK, "]"},
+	}
+
+	for _, tt := range tests {
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
+
+		if tok.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, tok.Type)
+		}
+
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
+		}
+	}
+}
+
+// Test single & and | characters (fallthrough cases)
+func TestScanner_SingleAmpersandPipe(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedType    token.Token
+		expectedLiteral string
+	}{
+		{"&", token.EOF, ""}, // & alone falls through to EOF
+		{"|", token.EOF, ""}, // | alone falls through to EOF
+	}
+
+	for _, tt := range tests {
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
+
+		if tok.Type != tt.expectedType {
+			t.Fatalf("token type wrong. expected=%d, got=%d", tt.expectedType, tok.Type)
+		}
+
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("token literal wrong. expected=%s, got=%s", tt.expectedLiteral, tok.Literal)
+		}
+	}
+}
+
+// Test unknown characters
+func TestScanner_UnknownCharacters(t *testing.T) {
+	tests := []struct {
+		input string
+	}{
+		{"@"}, // Unknown character
+		{"#"}, // Unknown character
+		{"$"}, // Unknown character
+		{"%"}, // Unknown character
+		{"^"}, // Unknown character
+		{"~"}, // Unknown character
+		{"`"}, // Unknown character
+	}
+
+	for _, tt := range tests {
+		scanner := NewScanner(tt.input)
+		tok := scanner.NextToken()
+
+		if tok.Type != token.EOF {
+			t.Fatalf("token type wrong for unknown char %s. expected=%d, got=%d", tt.input, token.EOF, tok.Type)
+		}
+
+		if tok.Literal != "" {
+			t.Fatalf("token literal wrong for unknown char %s. expected=\"\", got=%s", tt.input, tok.Literal)
+		}
+	}
+}
