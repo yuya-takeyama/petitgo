@@ -32,6 +32,7 @@ petitgo は小さな Go 実装で、最終的にはセルフホスト（自分�
 ## 開発フロー（Pull Request ベース）
 
 ### ブランチ戦略
+
 1. 作業開始時は最新の main ブランチから作業ブランチを作成
    - ブランチ名: `yuya-takeyama/feat/FEAT_NAME`
 2. 機能実装・テスト追加を行う
@@ -40,6 +41,7 @@ petitgo は小さな Go 実装で、最終的にはセルフホスト（自分�
 4. レビュー・テスト通過後に main ブランチにマージ
 
 ### TDD サイクル（PR 内で実施）
+
 1. テストファイルを先に作る（`*_test.go`）
 2. `go test` で RED を確認
 3. 実装ファイルを作って GREEN に
@@ -172,7 +174,7 @@ petitgo は小さな Go 実装で、最終的にはセルフホスト（自分�
 - [x] repl/ パッケージの修正（完了）
 - [x] main.go の修正（完了）
 - [x] 全テストファイルの修正（完了）
-- [x] ファイル名の統一（scanner_*.go パターンに統一）
+- [x] ファイル名の統一（scanner\_\*.go パターンに統一）
 
 **最終構造:**
 
@@ -207,7 +209,7 @@ petitgo/
 6. ✅ repl パッケージ: import 修正完了
 7. ✅ main.go: 修正不要（既に正しい import）
 8. ✅ テストファイル群: package 宣言と import 修正完了
-9. ✅ ファイル名統一: scanner_*.go パターンに統一完了
+9. ✅ ファイル名統一: scanner\_\*.go パターンに統一完了
 
 **達成事項:**
 
@@ -238,11 +240,11 @@ petitgo/
   - [x] type_inference_test.go - 型推論機能テスト
   - [x] struct_test.go, slice_test.go - 構造体・スライステスト
 - [x] バグ修正（完了）
-  - [x] if文条件パース問題（struct literal誤判定）
-  - [x] 関数再帰実行でのnilポインタ問題
-  - [x] EvalValueWithEnvironment統合
-  - [x] Phase 3 統合テストのValue型対応（2025-07-04修正）
-  - [x] parseIfCondition修正（数値比較式の正しい解析）
+  - [x] if 文条件パース問題（struct literal 誤判定）
+  - [x] 関数再帰実行での nil ポインタ問題
+  - [x] EvalValueWithEnvironment 統合
+  - [x] Phase 3 統合テストの Value 型対応（2025-07-04 修正）
+  - [x] parseIfCondition 修正（数値比較式の正しい解析）
 
 **現在のファイル構造更新:**
 
@@ -293,7 +295,7 @@ petitgo/
   - [x] カスタム print 関数削除
 - [x] 包括的サンプルコード（完了）
   - [x] examples/ ディレクトリ
-  - [x] 8つの実用的サンプル
+  - [x] 8 つの実用的サンプル
   - [x] 詳細な README.md
 
 **現在のファイル構造:**
@@ -338,12 +340,14 @@ petitgo/
 ```
 
 **動作実績:**
+
 - ✅ 基本的な petitgo プログラムのコンパイル・実行成功
-- ✅ 四則演算、変数、関数、if文など主要機能対応
+- ✅ 四則演算、変数、関数、if 文など主要機能対応
 - ✅ Go 本家互換の println 出力
 - ✅ ビルド時間も高速（Go コンパイラ活用）
 
 **既知の課題:**
+
 - ⚠️ 括弧による演算子優先順位制御（`(x+y)*2` が正しく動作しない）
 - ⚠️ for 文の完全実装
 - ⚠️ 変数再代入（`x = y`）未対応
@@ -359,30 +363,34 @@ petitgo/
 ## 開発メモリ
 
 ### 2025-07-04 作業内容 (Phase 8 バグ修正)
-- Phase 3 統合テストがValue型システムで失敗していた問題を修正
+
+- Phase 3 統合テストが Value 型システムで失敗していた問題を修正
 - `parseIfCondition` が数値から始まる比較式（`1 > 0`）を正しく解析できていなかった
 - `parseTerm()` から `ParseExpression()` に変更して解決
 - 全テストが通ることを確認済み
 
 ### 2025-07-04 作業内容 (Phase 8 演算子優先順位修正)
+
 - calculator.pg の `result2 := (x + y) * 2` が正しく動作しない問題を発見
 - TDD アプローチで tests/integration/calculator_test.go を作成
 - codegen で全ての BinaryOpNode を括弧で囲むように修正
 - 括弧による演算子優先順位制御が完全に動作するように
 
 ### 2025-07-04 作業内容 (AST JSON 出力機能追加)
+
 - `petitgo ast file.pg` コマンドを新規実装
 - 全ての AST ノードと Statement に MarshalJSON() メソッドを追加
 - JSON による AST 構造の可視化が可能に
 - 包括的なテストスイート (ast_test.go) も実装
 
 ### 2025-07-04 作業内容 (Phase 9 開始 - セルフホスティング基盤)
+
 - **変数再代入 (x = y) の完全実装**
   - ReassignStatement AST ノードを新規追加
   - parser, codegen, eval の全てに対応追加
   - examples/reassignment.pg で動作確認完了
 - **コメント機能の完全実装**
-  - 行コメント (//) とブロックコメント (/* */) の両方をサポート
+  - 行コメント (//) とブロックコメント (/\* \*/) の両方をサポート
   - scanner に scanLineComment, scanBlockComment メソッド追加
   - parser でコメントを自動スキップ
   - examples/comments.pg で動作確認完了
@@ -395,7 +403,7 @@ petitgo/
   - for ループの完全形式 `for i := 0; i < 10; i++` をサポート
   - parser で condition-only と full-form を自動判別
   - examples/for_loop.pg で動作確認完了
-- **複合代入演算子 (+=, -=, *=, /=)**
+- **複合代入演算子 (+=, -=, \*=, /=)**
   - ADD_ASSIGN, SUB_ASSIGN, MUL_ASSIGN, QUO_ASSIGN トークン追加
   - CompoundAssignStatement AST ノード実装
   - 全コンポーネントに実装完了
@@ -406,14 +414,16 @@ petitgo/
   - codegen と eval は次回実装予定
 
 **Phase 9 達成状況:**
+
 - ✅ 変数再代入 (x = y)
-- ✅ コメント (// と /* */)
+- ✅ コメント (// と /\* \*/)
 - ✅ インクリメント・デクリメント (++, --)
 - ✅ 完全な for ループ (init; condition; update)
-- ✅ 複合代入演算子 (+=, -=, *=, /=)
+- ✅ 複合代入演算子 (+=, -=, \*=, /=)
 - 🚧 switch 文 (parser まで実装済み)
 
 **新しいサンプルファイル:**
+
 - examples/reassignment.pg - 変数再代入のデモ
 - examples/comments.pg - コメント機能のデモ
 - examples/increment.pg - インクリメント・デクリメントのデモ
@@ -423,6 +433,7 @@ petitgo/
 - examples/self_test.pg - セルフホスティング準備テスト
 
 ### 2025-07-05 作業内容 (Phase 9 ネイティブバイナリコンパイラ完成)
+
 - **真のネイティブバイナリ生成システム完成**
   - asmgen/ パッケージを新規作成、ARM64 アセンブリコード生成
   - Go コンパイラ完全非依存のネイティブバイナリ出力
@@ -431,7 +442,7 @@ petitgo/
 - **ARM64 スタックフレーム管理の完全実装**
   - stp/ldp による frame pointer と link register の適切な保存・復元
   - フレームポインタベースの変数ストレージ ([x29, #-offset])
-  - 16バイトアライメントを考慮したスタック操作
+  - 16 バイトアライメントを考慮したスタック操作
 - **完全な制御構文サポート**
   - if/else 文の完全実装 (条件評価、分岐、ラベル生成)
   - for ループの完全実装 (condition-only 形式)
@@ -443,7 +454,7 @@ petitgo/
   - 再帰呼び出し時のスタック管理
   - fibonacci 関数の完全動作確認
 - **数値出力システムの実装**
-  - 多桁数値の10進表示機能 (_print_number 関数)
+  - 多桁数値の 10 進表示機能 (\_print_number 関数)
   - 桁分解アルゴリズム (udiv/msub による除算・剰余)
   - バッファを使った逆順出力の実装
 - **変数管理システムの完成**
@@ -452,12 +463,13 @@ petitgo/
   - 関数間での変数スコープ分離
 
 **実装完了ファイル構造:**
+
 ```
 petitgo/
 ├── main.go              # CLI entry point with asm/native commands
 ├── token/              # Token definitions
 ├── scanner/            # Lexical analysis
-├── ast/                # AST node definitions  
+├── ast/                # AST node definitions
 ├── parser/             # Syntax analysis
 ├── eval/               # Evaluation with type system
 ├── codegen/            # Go source code generation (Phase 8)
@@ -474,6 +486,7 @@ petitgo/
 ```
 
 **動作実績:**
+
 - ✅ fibonacci(0-9) の完全計算: 0,1,1,2,3,5,8,13,21,34
 - ✅ 再帰関数呼び出しの正常動作
 - ✅ if/else 分岐の正常動作
@@ -483,17 +496,19 @@ petitgo/
 - ✅ 真のネイティブバイナリ生成 (Go コンパイラ非依存)
 
 **既知の課題:**
+
 - ⚠️ 数値出力関数でセグメンテーションフォルト発生 (スタック管理の微調整が必要)
 - ⚠️ 大きな数値での桁数表示の最適化
 - ⚠️ 文字列リテラルの完全サポート
 - ⚠️ エラーハンドリングの改善
 
 **Phase 9 達成状況 (更新):**
+
 - ✅ 変数再代入 (x = y)
-- ✅ コメント (// と /* */)
+- ✅ コメント (// と /\* \*/)
 - ✅ インクリメント・デクリメント (++, --)
 - ✅ 完全な for ループ (init; condition; update)
-- ✅ 複合代入演算子 (+=, -=, *=, /=)
+- ✅ 複合代入演算子 (+=, -=, \*=, /=)
 - ✅ **真のネイティブバイナリ生成 (NEW)**
 - ✅ **再帰関数の完全サポート (NEW)**
 - ✅ **if/else 文の完全実装 (NEW)**
@@ -501,31 +516,33 @@ petitgo/
 - 🚧 switch 文 (parser まで実装済み)
 
 ### 2025-07-04 作業内容 (Go build 依存完全除去・真のネイティブコンパイラ完成)
+
 - **fibonacci.pg ネイティブ実行修正**
-  - _print_number 関数の再帰的実装により数値出力バグ修正
+  - \_print_number 関数の再帰的実装により数値出力バグ修正
   - fibonacci 数列 (0,1,1,2,3,5,8,13,21,34) の完全動作確認
   - ARM64 アセンブリ生成の安定化完了
 - **包括的テストスイート充実**
   - asmgen/ パッケージの完全なテストスイート実装
   - ARM64 アセンブリ生成の全主要機能をテスト
-  - fibonacci 関数、変数代入、二項演算、if文、for文の包括的テスト
+  - fibonacci 関数、変数代入、二項演算、if 文、for 文の包括的テスト
   - QUO (除算) トークンのサポート追加
   - eval パッケージの struct テストを一時スキップ（未実装機能のため）
   - 全テストが PASS 状態で維持
 - **Go build 依存の完全除去**
   - `petitgo build` コマンドを asmgen ベースに完全移行
-  - `petitgo run` コマンドも asmgen ベースに完全移行  
+  - `petitgo run` コマンドも asmgen ベースに完全移行
   - codegen パッケージ依存を削除（import 削除）
   - `petitgo native` コマンド削除（もう不要）
   - 一時ファイル管理を os.CreateTemp() で適切に実装
   - as + clang による真のネイティブバイナリ生成
 
 **Phase 8 完全達成状況 (更新):**
+
 - ✅ 変数再代入 (x = y)
-- ✅ コメント (// と /* */)  
+- ✅ コメント (// と /\* \*/)
 - ✅ インクリメント・デクリメント (++, --)
 - ✅ 完全な for ループ (init; condition; update)
-- ✅ 複合代入演算子 (+=, -=, *=, /=)
+- ✅ 複合代入演算子 (+=, -=, \*=, /=)
 - ✅ **Go build 依存完全除去 (NEW)**
 - ✅ **真のネイティブコンパイラ完成 (NEW)**
 - ✅ **fibonacci 完全動作 (NEW)**
@@ -533,15 +550,54 @@ petitgo/
 - 🚧 switch 文 (parser まで実装済み)
 
 **利用可能コマンド (更新):**
+
 - `petitgo build file.pg` - ネイティブバイナリ生成 (Go コンパイラ非依存)
 - `petitgo run file.pg` - 直接実行 (Go コンパイラ非依存)
 - `petitgo ast file.pg` - AST JSON 出力
 - `petitgo asm file.pg` - ARM64 アセンブリ出力
 - `petitgo` - REPL モード
 
+### 2025-07-05 作業内容 (クロスプラットフォーム対応完成)
+
+- **macOS ARM64 と Linux x86_64 のクロスプラットフォーム対応**
+  - asmgen パッケージをアーキテクチャ別に分離 (arm64.go, x86_64.go)
+  - インターフェースベースのファクトリパターン実装
+  - プラットフォーム自動検出 (runtime.GOOS/GOARCH)
+  - アセンブラ/リンカコマンドの切り替え (as -arch arm64 vs as --64)
+- **セグメンテーションフォルト修正**
+  - ARM64 print_number のレジスタ破壊修正 (x1, x2 の保存/復元)
+  - x86_64 print_number のレジスタ破壊修正 (%rsi, %rcx の保存/復元)
+  - calculator テストの全ケース PASS
+- **テストファイルのアーキテクチャ別分離**
+  - arm64_test.go, x86_64_test.go にプラットフォーム固有テスト分離
+  - ビルドタグ (//go:build) で適切なテストのみ実行
+  - asmgen_test.go は共通テストに集約
+- **CI/CD 最適化**
+  - Matrix build 導入で重複削除 (ubuntu-latest, macos-latest)
+  - fail-fast: false でデバッグ効率向上
+  - `go test -race` のみ実行 (重複削除)
+  - GitHub Actions timeout-minutes 使用
+  - REPL テスト強化 (プロンプト「> 5」パターンチェック)
+  - fibonacci 実行結果検証 (0,1,1,2,3,5,8,13,21,34)
+- **開発環境改善**
+  - Prettier フックに .yaml/.yml サポート追加
+
+**達成状況:**
+
+- ✅ GitHub Actions Ubuntu/macOS 両環境で全テスト PASS
+- ✅ 真のクロスプラットフォーム対応完成
+- ✅ セグフォルト完全解決
+
 ### 次回の作業
+
 - switch 文の asmgen/eval 実装完了
 - 構造体フィールドアクセス (obj.field) の実装
 - 基本的なスライス操作の実装
 - 文字列比較と操作の実装
 - petitgo 自身のセルフコンパイル準備
+
+### 引き継ぎ事項
+
+- REPL テストは現在「> 5」パターンでチェック (出力形式変更時要調整)
+- Windows 対応追加時は新しいジェネレータが必要
+- 既知の課題は NEXT_FEATURES.md 参照

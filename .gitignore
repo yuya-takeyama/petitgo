@@ -70,3 +70,8 @@ examples/hello_native
 examples/hello_only
 examples/simple_native
 examples/basic_math
+
+# Test binaries (any binary without extension in project root)
+test_simple
+hello
+calculator
