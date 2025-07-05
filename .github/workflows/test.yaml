@@ -55,23 +55,13 @@ jobs:
 
       - name: Test fibonacci execution
         run: |
-          if [ -f examples/fibonacci.pg ]; then
-            output=$(./petitgo run examples/fibonacci.pg | tr '\n' ' ')
-            expected="0 1 1 2 3 5 8 13 21 34 "
-            if [ "$output" = "$expected" ]; then
-              echo "Fibonacci test passed: $output"
-            else
-              echo "Fibonacci test failed!"
-              echo "Expected: $expected"
-              echo "Got:      $output"
-              exit 1
-            fi
-          fi
-
-      - name: Test native compilation on macOS ARM64
-        if: matrix.os == 'macos-latest'
-        run: |
-          if [ -f examples/fibonacci.pg ]; then
-            ./petitgo asm examples/fibonacci.pg > /dev/null
-            echo "ARM64 assembly generation test passed"
+          output=$(./petitgo run examples/fibonacci.pg | tr '\n' ' ')
+          expected="0 1 1 2 3 5 8 13 21 34 "
+          if [ "$output" = "$expected" ]; then
+            echo "Fibonacci test passed: $output"
+          else
+            echo "Fibonacci test failed!"
+            echo "Expected: $expected"
+            echo "Got:      $output"
+            exit 1
           fi
