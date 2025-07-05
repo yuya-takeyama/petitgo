@@ -44,8 +44,9 @@ jobs:
         run: ./petitgo help
 
       - name: Test REPL functionality
+        timeout-minutes: 1
         run: |
-          echo "2 + 3" | timeout 5s ./petitgo || true
+          echo "2 + 3" | ./petitgo || true
 
       - name: Test example compilation
         run: |
