@@ -47,12 +47,15 @@ jobs:
       - name: Test REPL functionality
         timeout-minutes: 1
         run: |
-          result=$(echo "2 + 3" | ./petitgo | grep -o '^5$' | head -1)
-          if [ "$result" != "5" ]; then
-            echo "Error: Expected output '5' but got different result"
+          output=$(echo "2 + 3" | ./petitgo)
+          if echo "$output" | grep -q '^> 5$'; then
+            echo "REPL test passed: 2 + 3 = 5"
+          else
+            echo "REPL test failed!"
+            echo "Full output:"
+            echo "$output"
             exit 1
           fi
-          echo "REPL test passed: 2 + 3 = 5"
 
       - name: Test fibonacci execution
         run: |
