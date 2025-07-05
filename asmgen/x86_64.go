@@ -10,17 +10,21 @@ import (
 
 // X86_64Generator generates x86_64 assembly code for Linux
 type X86_64Generator struct {
-	output    strings.Builder
-	labelNum  int
-	variables map[string]int // variable name -> stack offset
-	stackSize int
+	output         strings.Builder
+	labelNum       int
+	variables      map[string]int // variable name -> stack offset
+	stackSize      int
+	stringLiterals map[string]string // string value -> label name
+	stringCount    int
 }
 
 // NewX86_64Generator creates a new x86_64 assembly generator
 func NewX86_64Generator() *X86_64Generator {
 	return &X86_64Generator{
-		variables: make(map[string]int),
-		stackSize: 0,
+		variables:      make(map[string]int),
+		stackSize:      0,
+		stringLiterals: make(map[string]string),
+		stringCount:    0,
 	}
 }
 
@@ -39,6 +43,9 @@ func (g *X86_64Generator) Generate(statements []ast.Statement) string {
 			g.generateFunction(funcStmt)
 		}
 	}
+
+	// Generate string literals in data section
+	g.generateStringLiterals()
 
 	return g.output.String()
 }
@@ -139,8 +146,16 @@ func (g *X86_64Generator) generateStatement(stmt ast.Statement) {
 
 func (g *X86_64Generator) generatePrintln(arg ast.ASTNode) {
 	g.generateExpression(arg)
-	g.writeLine("    # Print number in %rax")
-	g.writeLine("    call _print_number")
+
+	// Check argument type to determine print function
+	switch arg.(type) {
+	case *ast.StringNode:
+		g.writeLine("    # Print string in %rax")
+		g.writeLine("    call _print_string")
+	default:
+		g.writeLine("    # Print number in %rax")
+		g.writeLine("    call _print_number")
+	}
 }
 
 func (g *X86_64Generator) generateExpression(expr ast.ASTNode) {
@@ -151,6 +166,10 @@ func (g *X86_64Generator) generateExpression(expr ast.ASTNode) {
 		if offset, exists := g.variables[e.Name]; exists {
 			g.writeLine(fmt.Sprintf("    movq -%d(%%rbp), %%rax", offset))
 		}
+	case *ast.StringNode:
+		// Get or create string label
+		label := g.getStringLabel(e.Value)
+		g.writeLine(fmt.Sprintf("    leaq %s(%%rip), %%rax", label))
 	case *ast.BinaryOpNode:
 		// Left operand
 		g.generateExpression(e.Left)
@@ -345,6 +364,31 @@ func (g *X86_64Generator) getNewLabel() string {
 	return fmt.Sprintf("L%d", g.labelNum)
 }
 
+func (g *X86_64Generator) getStringLabel(value string) string {
+	if label, exists := g.stringLiterals[value]; exists {
+		return label
+	}
+
+	label := fmt.Sprintf("str_%d", g.stringCount)
+	g.stringLiterals[value] = label
+	g.stringCount++
+	return label
+}
+
+func (g *X86_64Generator) generateStringLiterals() {
+	if len(g.stringLiterals) == 0 {
+		return
+	}
+
+	g.writeLine("")
+	g.writeLine(".section .rodata")
+
+	for value, label := range g.stringLiterals {
+		g.writeLine(fmt.Sprintf("%s:", label))
+		g.writeLine(fmt.Sprintf("    .asciz \"%s\"", value))
+	}
+}
+
 func (g *X86_64Generator) writeLine(s string) {
 	g.output.WriteString(s + "\n")
 }
@@ -426,6 +470,41 @@ print_newline:
     syscall
     
     addq $32, %rsp
+    popq %rbp
+    ret
+
+# Runtime function to print strings (x86_64 Linux)
+_print_string:
+    pushq %rbp
+    movq %rsp, %rbp
+    
+    # Calculate string length (simple strlen implementation)
+    movq %rax, %rsi       # Save string pointer
+    movq $0, %rcx         # Length counter
+    
+strlen_loop:
+    movb (%rsi,%rcx), %dl # Load byte at position
+    testb %dl, %dl        # Check if null terminator
+    jz print_str          # If zero, go to print
+    incq %rcx             # Increment length
+    jmp strlen_loop
+    
+print_str:
+    # Write system call with calculated length
+    movq $1, %rax         # sys_write
+    movq $1, %rdi         # stdout
+    # %rsi already has string pointer, %rcx has length
+    movq %rcx, %rdx       # length
+    syscall
+    
+    # Print newline
+    movq $1, %rax         # sys_write
+    movq $1, %rdi         # stdout
+    movq %rsp, %rsi       # Use stack for newline
+    movb $10, (%rsi)      # ASCII newline
+    movq $1, %rdx         # length
+    syscall
+    
     popq %rbp
     ret
 `

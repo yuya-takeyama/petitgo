@@ -443,6 +443,239 @@ func TestParseSwitchStatement(t *testing.T) {
 	}
 }
 
+// Test switch statement detailed cases
+func TestParseSwitchStatementDetailed(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected struct {
+			valueName   string
+			numCases    int
+			hasDefault  bool
+			caseValues  []int
+			caseBodyLen []int
+		}
+	}{
+		{
+			name: "switch with multiple cases",
+			input: `switch x {
+			case 1:
+				print("one")
+			case 2:
+				print("two")
+				y = 2
+			case 3:
+				print("three")
+			default:
+				print("other")
+			}`,
+			expected: struct {
+				valueName   string
+				numCases    int
+				hasDefault  bool
+				caseValues  []int
+				caseBodyLen []int
+			}{
+				valueName:   "x",
+				numCases:    3,
+				hasDefault:  true,
+				caseValues:  []int{1, 2, 3},
+				caseBodyLen: []int{1, 2, 1},
+			},
+		},
+		{
+			name: "switch without default",
+			input: `switch y {
+			case 10:
+				x = 10
+			case 20:
+				x = 20
+			}`,
+			expected: struct {
+				valueName   string
+				numCases    int
+				hasDefault  bool
+				caseValues  []int
+				caseBodyLen []int
+			}{
+				valueName:   "y",
+				numCases:    2,
+				hasDefault:  false,
+				caseValues:  []int{10, 20},
+				caseBodyLen: []int{1, 1},
+			},
+		},
+		{
+			name: "switch with empty case",
+			input: `switch z {
+			case 1:
+			case 2:
+				print("two")
+			}`,
+			expected: struct {
+				valueName   string
+				numCases    int
+				hasDefault  bool
+				caseValues  []int
+				caseBodyLen []int
+			}{
+				valueName:   "z",
+				numCases:    2,
+				hasDefault:  false,
+				caseValues:  []int{1, 2},
+				caseBodyLen: []int{0, 1},
+			},
+		},
+		{
+			name: "switch with only default",
+			input: `switch a {
+			default:
+				print("default")
+			}`,
+			expected: struct {
+				valueName   string
+				numCases    int
+				hasDefault  bool
+				caseValues  []int
+				caseBodyLen []int
+			}{
+				valueName:   "a",
+				numCases:    0,
+				hasDefault:  true,
+				caseValues:  []int{},
+				caseBodyLen: []int{},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sc := scanner.NewScanner(tt.input)
+			parser := NewParser(sc)
+
+			stmt := parser.ParseStatement()
+			switchStmt, ok := stmt.(*ast.SwitchStatement)
+			if !ok {
+				t.Fatalf("expected *ast.SwitchStatement, got %T", stmt)
+			}
+
+			// Check value
+			varNode, ok := switchStmt.Value.(*ast.VariableNode)
+			if !ok {
+				t.Fatalf("expected switch value to be VariableNode, got %T", switchStmt.Value)
+			}
+			if varNode.Name != tt.expected.valueName {
+				t.Errorf("expected switch value '%s', got '%s'", tt.expected.valueName, varNode.Name)
+			}
+
+			// Check number of cases
+			if len(switchStmt.Cases) != tt.expected.numCases {
+				t.Errorf("expected %d cases, got %d", tt.expected.numCases, len(switchStmt.Cases))
+			}
+
+			// Check default
+			if tt.expected.hasDefault && switchStmt.Default == nil {
+				t.Errorf("expected default case to exist")
+			}
+			if !tt.expected.hasDefault && switchStmt.Default != nil {
+				t.Errorf("expected no default case")
+			}
+
+			// Check each case
+			for i, caseStmt := range switchStmt.Cases {
+				// Check case value
+				if i < len(tt.expected.caseValues) {
+					numNode, ok := caseStmt.Value.(*ast.NumberNode)
+					if !ok {
+						t.Errorf("case %d: expected NumberNode, got %T", i, caseStmt.Value)
+						continue
+					}
+					if numNode.Value != tt.expected.caseValues[i] {
+						t.Errorf("case %d: expected value %d, got %d", i, tt.expected.caseValues[i], numNode.Value)
+					}
+				}
+
+				// Check case body length
+				if i < len(tt.expected.caseBodyLen) {
+					if len(caseStmt.Body.Statements) != tt.expected.caseBodyLen[i] {
+						t.Errorf("case %d: expected %d statements, got %d", i, tt.expected.caseBodyLen[i], len(caseStmt.Body.Statements))
+					}
+				}
+			}
+		})
+	}
+}
+
+// Test switch statement with various expressions
+func TestParseSwitchStatementExpressions(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		shouldError bool
+	}{
+		{
+			name: "switch with string cases",
+			input: `switch name {
+			case "alice":
+				print("Hello Alice")
+			case "bob":
+				print("Hello Bob")
+			}`,
+			shouldError: false,
+		},
+		{
+			name: "switch with expression cases",
+			input: `switch x {
+			case 1 + 1:
+				print("two")
+			case 2 * 2:
+				print("four")
+			}`,
+			shouldError: false,
+		},
+		{
+			name: "switch with variable cases",
+			input: `switch x {
+			case a:
+				print("equals a")
+			case b:
+				print("equals b")
+			}`,
+			shouldError: false,
+		},
+		{
+			name: "switch with mixed case types",
+			input: `switch x {
+			case 1:
+				print("one")
+			case "two":
+				print("string two")
+			default:
+				print("other")
+			}`,
+			shouldError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sc := scanner.NewScanner(tt.input)
+			parser := NewParser(sc)
+
+			stmt := parser.ParseStatement()
+			switchStmt, ok := stmt.(*ast.SwitchStatement)
+			if !ok {
+				t.Fatalf("expected *ast.SwitchStatement, got %T", stmt)
+			}
+
+			// Just verify it parsed without panicking
+			if switchStmt == nil && !tt.shouldError {
+				t.Errorf("expected non-nil switch statement")
+			}
+		})
+	}
+}
+
 // Test package statement
 func TestParsePackageStatement(t *testing.T) {
 	input := "package main"

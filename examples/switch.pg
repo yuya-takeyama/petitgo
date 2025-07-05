@@ -1,0 +1,69 @@
+package main
+
+func main() {
+	// Test basic switch
+	var x int = 2
+	var result string = ""
+
+	switch x {
+	case 1:
+		result = "one"
+	case 2:
+		result = "two"
+	case 3:
+		result = "three"
+	default:
+		result = "other"
+	}
+
+	println("x =", x, "result =", result)
+
+	// Test switch with string
+	var name string = "alice"
+	var greeting string = ""
+
+	switch name {
+	case "alice":
+		greeting = "Hello Alice!"
+	case "bob":
+		greeting = "Hello Bob!"
+	default:
+		greeting = "Hello stranger!"
+	}
+
+	println("name =", name, "greeting =", greeting)
+
+	// Test switch with no match
+	var y int = 99
+	var message string = "unchanged"
+
+	switch y {
+	case 1:
+		message = "one"
+	case 2:
+		message = "two"
+	}
+
+	println("y =", y, "message =", message)
+
+	// Test switch with multiple statements in case
+	var z int = 1
+	var a int = 0
+	var b int = 0
+	var sum int = 0
+
+	switch z {
+	case 1:
+		a = 10
+		b = 20
+		sum = a + b
+	case 2:
+		a = 5
+		b = 15
+		sum = a + b
+	default:
+		sum = 0
+	}
+
+	println("z =", z, "sum =", sum)
+}

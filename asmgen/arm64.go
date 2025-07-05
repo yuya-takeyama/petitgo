@@ -10,17 +10,21 @@ import (
 
 // ARM64Generator generates ARM64 assembly code for M1 Mac
 type ARM64Generator struct {
-	output    strings.Builder
-	labelNum  int
-	variables map[string]int // variable name -> stack offset
-	stackSize int
+	output         strings.Builder
+	labelNum       int
+	variables      map[string]int // variable name -> stack offset
+	stackSize      int
+	stringLiterals map[string]string // string value -> label name
+	stringCount    int
 }
 
 // NewARM64Generator creates a new ARM64 assembly generator
 func NewARM64Generator() *ARM64Generator {
 	return &ARM64Generator{
-		variables: make(map[string]int),
-		stackSize: 0,
+		variables:      make(map[string]int),
+		stackSize:      0,
+		stringLiterals: make(map[string]string),
+		stringCount:    0,
 	}
 }
 
@@ -40,6 +44,9 @@ func (g *ARM64Generator) Generate(statements []ast.Statement) string {
 			g.generateFunction(funcStmt)
 		}
 	}
+
+	// Generate string literals in data section
+	g.generateStringLiterals()
 
 	return g.output.String()
 }
@@ -134,8 +141,16 @@ func (g *ARM64Generator) generateStatement(stmt ast.Statement) {
 
 func (g *ARM64Generator) generatePrintln(arg ast.ASTNode) {
 	g.generateExpression(arg)
-	g.writeLine("    // Print number in x0")
-	g.writeLine("    bl _print_number")
+
+	// Check argument type to determine print function
+	switch arg.(type) {
+	case *ast.StringNode:
+		g.writeLine("    // Print string in x0")
+		g.writeLine("    bl _print_string")
+	default:
+		g.writeLine("    // Print number in x0")
+		g.writeLine("    bl _print_number")
+	}
 }
 
 func (g *ARM64Generator) generateExpression(expr ast.ASTNode) {
@@ -146,6 +161,11 @@ func (g *ARM64Generator) generateExpression(expr ast.ASTNode) {
 		if offset, exists := g.variables[e.Name]; exists {
 			g.writeLine(fmt.Sprintf("    ldr x0, [x29, #-%d]", offset))
 		}
+	case *ast.StringNode:
+		// Get or create string label
+		label := g.getStringLabel(e.Value)
+		g.writeLine(fmt.Sprintf("    adrp x0, %s@PAGE", label))
+		g.writeLine(fmt.Sprintf("    add x0, x0, %s@PAGEOFF", label))
 	case *ast.BinaryOpNode:
 		// Left operand
 		g.generateExpression(e.Left)
@@ -330,6 +350,31 @@ func (g *ARM64Generator) getNewLabel() string {
 	return fmt.Sprintf("L%d", g.labelNum)
 }
 
+func (g *ARM64Generator) getStringLabel(value string) string {
+	if label, exists := g.stringLiterals[value]; exists {
+		return label
+	}
+
+	label := fmt.Sprintf("str_%d", g.stringCount)
+	g.stringLiterals[value] = label
+	g.stringCount++
+	return label
+}
+
+func (g *ARM64Generator) generateStringLiterals() {
+	if len(g.stringLiterals) == 0 {
+		return
+	}
+
+	g.writeLine("")
+	g.writeLine(".section __TEXT,__cstring,cstring_literals")
+
+	for value, label := range g.stringLiterals {
+		g.writeLine(fmt.Sprintf("%s:", label))
+		g.writeLine(fmt.Sprintf("    .asciz \"%s\"", value))
+	}
+}
+
 func (g *ARM64Generator) writeLine(s string) {
 	g.output.WriteString(s + "\n")
 }
@@ -351,6 +396,7 @@ func getFieldOffset(fieldName string) int {
 func (g *ARM64Generator) GenerateRuntime() string {
 	runtime := `
 // Runtime function to print numbers
+.p2align 2
 _print_number:
     stp x29, x30, [sp, #-16]!
     mov x29, sp
@@ -371,6 +417,7 @@ _print_number:
     mov x2, #1
     b print_digits
     
+.p2align 2
 convert_loop:
     cbz x0, print_digits
     
@@ -387,10 +434,12 @@ convert_loop:
     mov x0, x4         // Continue with quotient
     b convert_loop
     
+.p2align 2
 print_digits:
     // Print digits in reverse order
     cbz x2, print_newline
     
+.p2align 2
 print_loop:
     sub x2, x2, #1
     ldrb w3, [x1, x2]  // Load character to w3
@@ -412,6 +461,7 @@ print_loop:
     
     cbnz x2, print_loop
     
+.p2align 2
 print_newline:
     // Write newline character directly
     mov x16, #4        // sys_write
@@ -423,6 +473,43 @@ print_newline:
     svc #0x80
     
     add sp, sp, #32
+    ldp x29, x30, [sp], #16
+    ret
+
+// Runtime function to print strings
+.p2align 2
+_print_string:
+    stp x29, x30, [sp, #-16]!
+    mov x29, sp
+    
+    // Calculate string length (simple strlen implementation)
+    mov x1, x0         // Save string pointer
+    mov x2, #0         // Length counter
+    
+.p2align 2
+strlen_loop:
+    ldrb w3, [x1, x2]  // Load byte at position
+    cbz w3, print_str  // If null terminator, go to print
+    add x2, x2, #1     // Increment length
+    b strlen_loop
+    
+.p2align 2
+print_str:
+    // Write system call with calculated length
+    mov x16, #4        // sys_write
+    mov x0, #1         // stdout
+    // x1 already has string pointer, x2 has length
+    svc #0x80
+    
+    // Print newline
+    mov x16, #4        // sys_write
+    mov x0, #1         // stdout
+    mov x1, sp         // Use stack for newline
+    mov w2, #10        // ASCII newline
+    strb w2, [x1]      // Store on stack
+    mov x2, #1         // length
+    svc #0x80
+    
     ldp x29, x30, [sp], #16
     ret
 `
