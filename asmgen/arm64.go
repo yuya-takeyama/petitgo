@@ -393,15 +393,22 @@ print_digits:
     
 print_loop:
     sub x2, x2, #1
-    ldrb w0, [x1, x2]
+    ldrb w3, [x1, x2]  // Load character to w3
+    
+    // Save registers before syscall
+    stp x1, x2, [sp, #-16]!
     
     // Write system call
-    mov x16, #4        // sys_write
-    mov x1, sp
-    strb w0, [x1]
+    sub sp, sp, #16    // Allocate space for character
+    strb w3, [sp]      // Store character on stack
     mov x0, #1         // stdout
+    mov x1, sp         // buffer (character on stack)
     mov x2, #1         // length
+    mov x16, #4        // sys_write
     svc #0x80
+    
+    add sp, sp, #16    // Deallocate character space
+    ldp x1, x2, [sp], #16  // Restore registers
     
     cbnz x2, print_loop
     
