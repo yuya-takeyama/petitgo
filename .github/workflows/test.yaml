@@ -7,7 +7,10 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout code
@@ -51,33 +54,10 @@ jobs:
             echo "AST generation test passed"
           fi
 
-  test-macos:
-    runs-on: macos-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: Set up Go
-        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
-        with:
-          go-version: '1.24.4'
-
-      - name: Download dependencies
-        run: go mod download
-
-      - name: Run tests with race detection
-        run: go test -race -v ./...
-
-      - name: Build binary
-        run: go build -o petitgo
-
-      - name: Test native compilation (ARM64)
+      - name: Test native compilation on macOS ARM64
+        if: matrix.os == 'macos-latest'
         run: |
           if [ -f examples/fibonacci.pg ]; then
             ./petitgo asm examples/fibonacci.pg > /dev/null
             echo "ARM64 assembly generation test passed"
           fi
-
-      - name: Test help command on macOS
-        run: ./petitgo help
