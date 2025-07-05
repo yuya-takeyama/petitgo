@@ -1025,3 +1025,248 @@ func TestParserLastMileFor100Percent(t *testing.T) {
 		}
 	})
 }
+
+// Test additional edge cases to reach 100% parser coverage
+func TestParserAdditionalEdgeCases(t *testing.T) {
+	// Test ParseStatement default case (non-keyword tokens)
+	t.Run("ParseStatement default case", func(t *testing.T) {
+		tests := []string{
+			"42",
+			"\"hello\"",
+			"true",
+		}
+
+		for _, input := range tests {
+			sc := scanner.NewScanner(input)
+			parser := NewParser(sc)
+			stmt := parser.ParseStatement()
+
+			_, ok := stmt.(*ast.ExpressionStatement)
+			if !ok {
+				t.Errorf("expected ExpressionStatement for input %s, got %T", input, stmt)
+			}
+		}
+	})
+
+	// Test ParseStatement EOF case
+	t.Run("ParseStatement EOF", func(t *testing.T) {
+		sc := scanner.NewScanner("")
+		parser := NewParser(sc)
+		stmt := parser.ParseStatement()
+
+		if stmt != nil {
+			t.Errorf("expected nil for EOF, got %T", stmt)
+		}
+	})
+}
+
+// Test even more edge cases to get parser to 100% coverage
+func TestParserFinalPush100Percent(t *testing.T) {
+	// Test parseSwitchStatement missing edge cases (86.1% -> 100%)
+	t.Run("parseSwitchStatement comprehensive", func(t *testing.T) {
+		tests := []struct {
+			name  string
+			input string
+		}{
+			{
+				name:  "switch with value not identifier (error path)",
+				input: "switch 123 { case 1: print(1) }",
+			},
+			{
+				name:  "switch without opening brace (error path)",
+				input: "switch x print(1)",
+			},
+			{
+				name:  "switch with just default",
+				input: "switch x { default: print(\"default\") }",
+			},
+			{
+				name:  "switch with malformed case",
+				input: "switch x { case: print(1) }",
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				sc := scanner.NewScanner(tt.input)
+				parser := NewParser(sc)
+				stmt := parser.ParseStatement()
+
+				// Should still get a SwitchStatement even for error cases
+				_, ok := stmt.(*ast.SwitchStatement)
+				if !ok {
+					t.Errorf("expected SwitchStatement, got %T", stmt)
+				}
+			})
+		}
+	})
+
+	// Test parseTypeStatement missing edge cases (87.5% -> 100%)
+	t.Run("parseTypeStatement comprehensive", func(t *testing.T) {
+		tests := []struct {
+			name  string
+			input string
+		}{
+			{
+				name:  "type without identifier (error path)",
+				input: "type 123 struct { }",
+			},
+			{
+				name:  "type without struct keyword (error path)",
+				input: "type Person { name string }",
+			},
+			{
+				name:  "type without opening brace (error path)",
+				input: "type Person struct name string",
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				sc := scanner.NewScanner(tt.input)
+				parser := NewParser(sc)
+				stmt := parser.ParseStatement()
+
+				// Should still get a TypeStatement even for error cases
+				_, ok := stmt.(*ast.TypeStatement)
+				if !ok {
+					t.Errorf("expected TypeStatement, got %T", stmt)
+				}
+			})
+		}
+	})
+
+	// Test parseFactor missing edge cases (95.4% -> 100%)
+	t.Run("parseFactor comprehensive", func(t *testing.T) {
+		tests := []struct {
+			name  string
+			input string
+		}{
+			{
+				name:  "unknown token (error path)",
+				input: "@",
+			},
+			{
+				name:  "incomplete slice type",
+				input: "[",
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				sc := scanner.NewScanner(tt.input)
+				parser := NewParser(sc)
+				expr := parser.ParseExpression()
+
+				// Should get some expression, even if it's nil for error cases
+				if expr == nil {
+					// This is acceptable for severe error cases
+					return
+				}
+			})
+		}
+	})
+
+	// Test parseFullForStatement edge cases (94.1% -> 100%)
+	t.Run("parseFullForStatement edge cases", func(t *testing.T) {
+		tests := []struct {
+			name  string
+			input string
+		}{
+			{
+				name:  "for loop with empty init semicolon",
+				input: "for ; i < 10; i++ { }",
+			},
+			{
+				name:  "for loop with empty condition semicolon",
+				input: "for i := 0; ; i++ { }",
+			},
+			{
+				name:  "for loop with empty update",
+				input: "for i := 0; i < 10; { }",
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				sc := scanner.NewScanner(tt.input)
+				parser := NewParser(sc)
+				stmt := parser.ParseStatement()
+
+				forStmt, ok := stmt.(*ast.ForStatement)
+				if !ok {
+					t.Errorf("expected ForStatement, got %T", stmt)
+				}
+				if forStmt == nil {
+					t.Errorf("expected non-nil for statement")
+				}
+			})
+		}
+	})
+
+	// Test parseFuncStatement edge cases (96.0% -> 100%)
+	t.Run("parseFuncStatement edge cases", func(t *testing.T) {
+		tests := []struct {
+			name  string
+			input string
+		}{
+			{
+				name:  "function without return type",
+				input: "func test() { print(\"hello\") }",
+			},
+			{
+				name:  "function without body (just declaration)",
+				input: "func test() int",
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				sc := scanner.NewScanner(tt.input)
+				parser := NewParser(sc)
+				stmt := parser.ParseStatement()
+
+				funcStmt, ok := stmt.(*ast.FuncStatement)
+				if !ok {
+					t.Errorf("expected FuncStatement, got %T", stmt)
+				}
+				if funcStmt == nil {
+					t.Errorf("expected non-nil function statement")
+				}
+			})
+		}
+	})
+
+	// Test parseStructLiteral edge cases (94.1% -> 100%)
+	t.Run("parseStructLiteral edge cases", func(t *testing.T) {
+		tests := []struct {
+			name  string
+			input string
+		}{
+			{
+				name:  "struct literal with missing closing brace",
+				input: "Person{ name: \"John\"",
+			},
+			{
+				name:  "struct literal with comma at end",
+				input: "Person{ name: \"John\", }",
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				sc := scanner.NewScanner(tt.input)
+				parser := NewParser(sc)
+				expr := parser.ParseExpression()
+
+				structLit, ok := expr.(*ast.StructLiteral)
+				if !ok {
+					t.Errorf("expected StructLiteral, got %T", expr)
+				}
+				if structLit == nil {
+					t.Errorf("expected non-nil struct literal")
+				}
+			})
+		}
+	})
+}

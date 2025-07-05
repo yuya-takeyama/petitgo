@@ -363,3 +363,169 @@ func TestTokenToString(t *testing.T) {
 		})
 	}
 }
+
+// Test missing AST nodes to reach 100% coverage
+func TestMissingASTNodes(t *testing.T) {
+	// Test SwitchStatement String and MarshalJSON
+	t.Run("SwitchStatement", func(t *testing.T) {
+		switchStmt := &SwitchStatement{
+			Value: &VariableNode{Name: "x"},
+			Cases: []*CaseStatement{
+				{
+					Value: &NumberNode{Value: 1},
+					Body:  &BlockStatement{Statements: []Statement{}},
+				},
+			},
+			Default: &BlockStatement{Statements: []Statement{}},
+		}
+
+		// Test String method
+		str := switchStmt.String()
+		if str == "" {
+			t.Errorf("SwitchStatement.String() should not be empty")
+		}
+
+		// Test MarshalJSON method
+		data, err := switchStmt.MarshalJSON()
+		if err != nil {
+			t.Errorf("SwitchStatement.MarshalJSON() error: %v", err)
+		}
+		if len(data) == 0 {
+			t.Errorf("SwitchStatement.MarshalJSON() should not be empty")
+		}
+	})
+
+	// Test CaseStatement String and MarshalJSON
+	t.Run("CaseStatement", func(t *testing.T) {
+		caseStmt := &CaseStatement{
+			Value: &NumberNode{Value: 1},
+			Body:  &BlockStatement{Statements: []Statement{}},
+		}
+
+		// Test String method
+		str := caseStmt.String()
+		if str == "" {
+			t.Errorf("CaseStatement.String() should not be empty")
+		}
+
+		// Test MarshalJSON method
+		data, err := caseStmt.MarshalJSON()
+		if err != nil {
+			t.Errorf("CaseStatement.MarshalJSON() error: %v", err)
+		}
+		if len(data) == 0 {
+			t.Errorf("CaseStatement.MarshalJSON() should not be empty")
+		}
+	})
+
+	// Test ExpressionStatement MarshalJSON
+	t.Run("ExpressionStatement", func(t *testing.T) {
+		exprStmt := &ExpressionStatement{
+			Expression: &NumberNode{Value: 42},
+		}
+
+		// Test MarshalJSON method
+		data, err := exprStmt.MarshalJSON()
+		if err != nil {
+			t.Errorf("ExpressionStatement.MarshalJSON() error: %v", err)
+		}
+		if len(data) == 0 {
+			t.Errorf("ExpressionStatement.MarshalJSON() should not be empty")
+		}
+	})
+
+	// Test statement() methods for structs that have them
+	t.Run("StructDefinition statement method", func(t *testing.T) {
+		structDef := &StructDefinition{}
+		structDef.statement() // This should just run without error
+	})
+
+	t.Run("PackageStatement statement method", func(t *testing.T) {
+		packageStmt := &PackageStatement{}
+		packageStmt.statement() // This should just run without error
+	})
+
+	t.Run("ImportStatement statement method", func(t *testing.T) {
+		importStmt := &ImportStatement{}
+		importStmt.statement() // This should just run without error
+	})
+
+	// Test InterfaceStatement String and MarshalJSON
+	t.Run("InterfaceStatement", func(t *testing.T) {
+		interfaceStmt := &InterfaceStatement{
+			Name:    "MyInterface",
+			Methods: []*MethodDef{},
+		}
+
+		// Test String method
+		str := interfaceStmt.String()
+		if str == "" {
+			t.Errorf("InterfaceStatement.String() should not be empty")
+		}
+
+		// Test MarshalJSON method
+		data, err := interfaceStmt.MarshalJSON()
+		if err != nil {
+			t.Errorf("InterfaceStatement.MarshalJSON() error: %v", err)
+		}
+		if len(data) == 0 {
+			t.Errorf("InterfaceStatement.MarshalJSON() should not be empty")
+		}
+	})
+
+	// Test FieldAccess String and MarshalJSON
+	t.Run("FieldAccess", func(t *testing.T) {
+		fieldAccess := &FieldAccess{
+			Object: &VariableNode{Name: "obj"},
+			Field:  "field",
+		}
+
+		// Test String method
+		str := fieldAccess.String()
+		if str == "" {
+			t.Errorf("FieldAccess.String() should not be empty")
+		}
+
+		// Test MarshalJSON method
+		data, err := fieldAccess.MarshalJSON()
+		if err != nil {
+			t.Errorf("FieldAccess.MarshalJSON() error: %v", err)
+		}
+		if len(data) == 0 {
+			t.Errorf("FieldAccess.MarshalJSON() should not be empty")
+		}
+	})
+
+	// Test StructField MarshalJSON
+	t.Run("StructField", func(t *testing.T) {
+		structField := &StructField{
+			Name: "field",
+			Type: "int",
+		}
+
+		// Test MarshalJSON method
+		data, err := structField.MarshalJSON()
+		if err != nil {
+			t.Errorf("StructField.MarshalJSON() error: %v", err)
+		}
+		if len(data) == 0 {
+			t.Errorf("StructField.MarshalJSON() should not be empty")
+		}
+	})
+
+	// Test SliceType MarshalJSON (line 580)
+	t.Run("SliceType", func(t *testing.T) {
+		sliceType := &SliceType{
+			ElementType: "int",
+		}
+
+		// Test MarshalJSON method
+		data, err := sliceType.MarshalJSON()
+		if err != nil {
+			t.Errorf("SliceType.MarshalJSON() error: %v", err)
+		}
+		if len(data) == 0 {
+			t.Errorf("SliceType.MarshalJSON() should not be empty")
+		}
+	})
+}
